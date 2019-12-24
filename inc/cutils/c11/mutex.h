@@ -21,11 +21,61 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 #pragma once
 
-#define CUTILS_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
-#define CUTILS_VERSION_MINOR @PROJECT_VERSION_MINOR@
-#define CUTILS_VERSION_PATCH @PROJECT_VERSION_PATHC@
-#define CUTILS_VERSION_TWEAK @PROJECT_VERSION_TWEAK@
-#define CUTILS_VERSION "@PROJECT_VERSION"
+#include <cutils/os_types.h>
+#include <cutils/c11/c11threads.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+typedef struct _mutex_t
+{
+  mtx_t mtx;
+} mutex_t;
+
+static inline bool mutex_new(mutex_t *mutex)
+{
+  bool retval = false;
+  if (mutex &&
+      !mtx_init(&mutex->mtx, mtx_timed)) {
+    retval = true;
+  }
+  return retval;
+}
+
+static inline void mutex_free(mutex_t *mutex)
+{
+  if (mutex) {
+    mtx_destroy(&mutex->mtx);
+  }
+}
+
+static inline bool mutex_lock(mutex_t *mutex, uint32_t wait_ms)
+{
+  bool retval = false;
+  if (mutex) {
+    if(!wait_ms) {
+      retval = !mtx_trylock(&mutex->mtx);
+    } else {
+      struct timespec tm = {.tv_sec = wait_ms / 1000, .tv_nsec = static_cast<long>((wait_ms % 1000) * 1000000)};
+      retval = (!mtx_timedlock(&mutex->mtx, &tm));
+    }
+  }
+  return retval;
+}
+
+static inline bool mutex_unlock(mutex_t *mutex)
+{
+  bool retval = false;
+  if (mutex) {
+    retval = (!mtx_unlock(&mutex->mtx));
+  }
+  return retval;
+}
+
+#ifdef __cplusplus
+};
+#endif

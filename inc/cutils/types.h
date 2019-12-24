@@ -22,10 +22,34 @@
  * THE SOFTWARE.
  */
 
-#pragma once
+#ifndef CUTILS_TYPES_H
+#define CUTILS_TYPES_H
 
-#define CUTILS_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
-#define CUTILS_VERSION_MINOR @PROJECT_VERSION_MINOR@
-#define CUTILS_VERSION_PATCH @PROJECT_VERSION_PATHC@
-#define CUTILS_VERSION_TWEAK @PROJECT_VERSION_TWEAK@
-#define CUTILS_VERSION "@PROJECT_VERSION"
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include <stdint.h>
+#include <stdbool.h>
+#include <assert.h>
+
+#define GetArraySize(x)                   ((sizeof((x)))/(sizeof((x)[0])))
+
+#ifndef MIN
+#    define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
+#ifndef MAX
+#    define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
+#ifndef CUTILS_ASSERT
+#define CUTILS_ASSERT(x) {\
+  if(!(x)) {\
+    *((volatile chary *)0) = 1;\
+  }\
+}
+#endif
+
+#ifdef __cplusplus
+};
+#endif
+#endif //CUTILS_TYPES_H

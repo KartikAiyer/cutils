@@ -21,11 +21,43 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+ #pragma once
 
-#pragma once
 
-#define CUTILS_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
-#define CUTILS_VERSION_MINOR @PROJECT_VERSION_MINOR@
-#define CUTILS_VERSION_PATCH @PROJECT_VERSION_PATHC@
-#define CUTILS_VERSION_TWEAK @PROJECT_VERSION_TWEAK@
-#define CUTILS_VERSION "@PROJECT_VERSION"
+#ifdef __cplusplus
+#include <atomic>
+using namespace std;
+#else
+#include <stdatomic.h>
+#endif
+
+#include <cutils/types.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * @brief These macros are used in api's that block and have a parameter to specify the block duration.
+ */
+#define WAIT_FOREVER          ((uint32_t)-1)
+#define NO_SLEEP              (0)
+
+/**
+ * @brief Prototype for callbacks used by dispatch apis. Allows to pass two context arguments whose durations should
+ * be alive for the duration of the dispatch API being used.
+ */
+typedef void (*dispatch_function_t)(void *arg1, void *arg2);
+
+/**
+ * @brief Aligned predicate to be used by dispatch once
+ */
+typedef atomic_uint dispatch_predicate_t;
+
+typedef void *dispatch_queue_timed_action_h;
+
+typedef struct _dispatch_queue_t dispatch_queue_t;
+
+#ifdef __cplusplus
+};
+#endif
