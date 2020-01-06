@@ -22,12 +22,12 @@
  * THE SOFTWARE.
  */
 #pragma once
+#include <cutils/types.h>
+#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <cutils/types.h>
-#include <stdarg.h>
 
 /** @defgroup klist - a quick linked list implementation
  *  This is a quick macro based Linked List implementation

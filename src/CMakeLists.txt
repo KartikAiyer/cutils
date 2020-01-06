@@ -10,6 +10,7 @@ message( ${TEMPLATE_HEADER_LOCATION} )
 configure_file( ${TEMPLATE_HEADER_LOCATION}/cutils/mutex.h.in ${PROJECT_BINARY_DIR}/inc/cutils/mutex.h )
 configure_file( ${TEMPLATE_HEADER_LOCATION}/cutils/task.h.in ${PROJECT_BINARY_DIR}/inc/cutils/task.h )
 configure_file( ${TEMPLATE_HEADER_LOCATION}/cutils/event_flag.h.in ${PROJECT_BINARY_DIR}/inc/cutils/event_flag.h )
+configure_file( ${TEMPLATE_HEADER_LOCATION}/cutils/ts_queue.h.in ${PROJECT_BINARY_DIR}/inc/cutils/ts_queue.h)
 
 function( print_list theList )
   foreach( item ${theList} )

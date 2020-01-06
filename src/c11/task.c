@@ -52,7 +52,8 @@ task_t *task_new_static(task_create_params_t *create_params)
 void task_destroy_static(task_t *task)
 {
   if(task) {
-    thrd_exit(0);
+    int res = 0;
+    thrd_join(task->task, &res);
   }
 }
 bool task_start(task_t *task)
