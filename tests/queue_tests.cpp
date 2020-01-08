@@ -146,6 +146,19 @@ TASK_STATIC_STORE_DEF(ts_queue_producer);
 TASK_STATIC_STORE_DECL(ts_queue_consumer, 16 * 1024);
 TASK_STATIC_STORE_DEF(ts_queue_consumer);
 
+TS_QUEUE_STORE_DECL(ts_queue_prod_cons, 16);
+TS_QUEUE_STORE_DEF(ts_queue_prod_cons);
+
+TS_QUEUE_STORE_DECL(ts_queue_fail, 10);
+TS_QUEUE_STORE_DEF(ts_queue_fail);
+
+TEST(ts_queue_test_simple, queue_should_fail_if_size_not_power_of_2)
+{
+  ts_queue_create_params_t params = {0};
+  TS_QUEUE_STORE_CREATE_PARAMS_INIT(params, ts_queue_fail);
+  ASSERT_FALSE(ts_queue_init(&params));
+}
+
 class ts_queue_test : public ::testing::Test
 {
 public:
@@ -163,21 +176,24 @@ protected:
     std::function<void(task_data_t *)> fn;
   };
 
-  FREE_LIST_STORE_DECL(ts_queue_prod_cons_free_list, ts_queue_test::task_data_t, 10);
+  FREE_LIST_STORE_DECL(ts_queue_prod_cons_free_list, ts_queue_test::task_data_t, 17);
   FREE_LIST_STORE_DEF(ts_queue_prod_cons_free_list);
 
   void SetUp() override
   {
-    free_list_create_params_t free_list_params = { 0};
+    free_list_create_params_t free_list_params = {0};
+    ts_queue_create_params_t ts_queue_params = {0};
     FREE_LIST_STORE_CREATE_PARAMS_INIT(free_list_params, ts_queue_prod_cons_free_list);
     m_data_store = free_list_init(&free_list_params);
+    TS_QUEUE_STORE_CREATE_PARAMS_INIT(ts_queue_params, ts_queue_prod_cons);
     m_cons_task = m_prod_task = nullptr;
-    ts_queue_init(&m_queue);
+    m_queue = ts_queue_init(&ts_queue_params);
   }
 
   void TearDown() override
   {
     stop_tasks();
+    ts_queue_destroy(m_queue);
   }
 
   void start_tasks()
@@ -229,7 +245,7 @@ protected:
   {
     bool retval = false;
     if(data) {
-      retval = ts_queue_enqueue(&m_queue, &data->elem);
+      retval = ts_queue_enqueue(m_queue, (void *) data, WAIT_FOREVER);
     }
     return retval;
   }
@@ -247,10 +263,10 @@ protected:
     return 0;
   }
   static int cons_task(void* ctx) {
-    ts_queue_item_t *item = 0;
+    void *item = 0;
     ts_queue_test *p_test = (ts_queue_test*)ctx;
 
-    while(ts_queue_dequeue(&p_test->m_queue, &item, 2000))
+    while (ts_queue_dequeue(p_test->m_queue, &item, 2000))
     {
       auto test_data = (task_data_t*)item;
       if(test_data->val == 9999) {
@@ -265,7 +281,7 @@ protected:
     return -1;
   }
 
-  ts_queue_t m_queue;
+  ts_queue_t *m_queue;
   task_t *m_prod_task;
   task_t *m_cons_task;
   free_list_t *m_data_store;
@@ -274,25 +290,47 @@ protected:
 
 TEST_F(ts_queue_test, ShouldReportZeroCountForEmptyQueue)
 {
-  ASSERT_EQ(0, ts_queue_get_count(&m_queue));
+  ASSERT_TRUE(m_queue);
+  ASSERT_EQ(0, ts_queue_get_count(m_queue));
 }
 TEST_F(ts_queue_test, ShouldBlockOnEmptyQueue)
 {
-  ts_queue_item_t *data = 0;
+  void *data = 0;
   auto c_start = std::clock();
 
-  ASSERT_FALSE(ts_queue_dequeue(&m_queue, &data, 2000));
+  ASSERT_TRUE(m_queue);
+  ASSERT_FALSE(ts_queue_dequeue(m_queue, &data, 2000));
   auto c_end = std::clock();
   auto time = c_end - c_start;
   ASSERT_LT(999,  time);
 }
+
+TEST_F(ts_queue_test, ShouldBlockOnFullQueue)
+{
+  ASSERT_TRUE(m_queue);
+  for (uint32_t i = 0; i < m_queue->size; i++) {
+    task_data_t *data = alloc_data();
+    ASSERT_TRUE(data);
+    data->val = i;
+    ASSERT_TRUE(ts_queue_enqueue(m_queue, data, 2000));
+  }
+  task_data_t *last_data = alloc_data();
+  ASSERT_TRUE(last_data);
+  last_data->val = m_queue->size + 1;
+  auto c_start = std::clock();
+  ASSERT_FALSE(ts_queue_enqueue(m_queue, last_data, 2000));
+  auto c_end = std::clock();
+  auto time = c_end - c_start;
+  ASSERT_LT(999, time);
+}
 TEST_F(ts_queue_test, ProducerConsumerShouldRun)
 {
+  ASSERT_TRUE(m_queue);
   start_tasks();
   task_data_t data = { .val = 0, .fn = [](task_data_t* p_data) {
     p_data->val = 10;
   }};
-  ASSERT_TRUE(ts_queue_enqueue(&m_queue, &data.elem));
+  ASSERT_TRUE(ts_queue_enqueue(m_queue, &data, 2000));
   stop_tasks();
   ASSERT_EQ(10, data.val);
 }

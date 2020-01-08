@@ -27,7 +27,6 @@
 #define CUTILS_C11_TS_QUEUE_H
 
 #include <cutils/mutex.h>
-#include <cutils/kqueue.h>
 #include <cutils/c11/c11threads.h>
 
 #ifdef __cplusplus
@@ -36,81 +35,121 @@ extern "C" {
 
 typedef struct {
   cnd_t cnd;
+  cnd_t full_cnd;
   mutex_t mtx;
-  kqueue_t queue;
+  void** pp_ptr_array;
+  size_t size;
   size_t count;
+  atomic_ulong head;
+  atomic_ulong tail;
 }ts_queue_t;
 
 typedef KListElem ts_queue_item_t;
 
-static inline void ts_queue_init(ts_queue_t *p_queue)
+#define TS_QUEUE_STORE(name)      _ts_queue_store_##name
+#define TS_QUEUE_STORE_T(name)    _ts_queue_store_##name##_t
+#define TS_QUEUE_STORE_DECL(name, size) \
+static size_t _ts_queue_store_num_elements_##name = size;\
+typedef struct {\
+  void* ptr_array[size];\
+  ts_queue_t queue;\
+}TS_QUEUE_STORE_T(name)
+
+#define TS_QUEUE_STORE_DEF(name) \
+static TS_QUEUE_STORE_T(name) TS_QUEUE_STORE(name)
+
+typedef struct {
+  ts_queue_t* p_queue;
+  void **ptr_array;
+  size_t size;
+}ts_queue_create_params_t;
+
+#define TS_QUEUE_STORE_CREATE_PARAMS_INIT(params, name) \
+memset(&(params), 0, sizeof((params)));\
+(params).p_queue = &TS_QUEUE_STORE(name).queue;\
+(params).ptr_array = TS_QUEUE_STORE(name).ptr_array;\
+(params).size = _ts_queue_store_num_elements_##name
+
+static inline ts_queue_t *ts_queue_init(ts_queue_create_params_t *params)
 {
-  if(p_queue) {
-    kqueue_init(&p_queue->queue);
-    CHECK_RUN(mutex_new(&p_queue->mtx), kqueue_drop_all(&p_queue->queue); return, "Failed to create Mutex");
-    CHECK_RUN(!cnd_init(&p_queue->cnd),
-              mutex_free(&p_queue->mtx);
-              kqueue_drop_all(&p_queue->queue);
-              return,
+  ts_queue_t *retval = 0;
+  if(params && params->p_queue && params->ptr_array) {
+    params->p_queue->pp_ptr_array = params->ptr_array;
+    params->p_queue->size = params->size;
+    CHECK_RUN(params->p_queue->size > 0 && (params->p_queue->size & (params->p_queue->size -1)) == 0,
+        return retval, "Queue Size must be a power of 2");
+    CHECK_RUN(mutex_new(&params->p_queue->mtx), return retval, "Failed to create Mutex");
+    CHECK_RUN(!cnd_init(&params->p_queue->cnd) && !cnd_init(&params->p_queue->full_cnd),
+              mutex_free(&params->p_queue->mtx);
+              return retval,
               "Failed to create Condition variable");
-    p_queue->count = 0;
+    params->p_queue->count = 0;
+    params->p_queue->head = params->p_queue->tail = 0;
+    retval = params->p_queue;
   }
+  return retval;
 }
 
-static inline void ts_queue_destroy(ts_queue_t *p_queue, ts_queue_item_t *p_item)
+static inline void ts_queue_destroy(ts_queue_t *p_queue)
 {
   if(p_queue) {
     cnd_destroy(&p_queue->cnd);
     mutex_free(&p_queue->mtx);
-    kqueue_drop_all(&p_queue->queue);
   }
-}
-static inline bool ts_queue_enqueue(ts_queue_t* p_queue, ts_queue_item_t* p_item)
-{
-  if(p_queue ) {
-    mutex_lock(&p_queue->mtx, WAIT_FOREVER);
-    kqueue_insert(&p_queue->queue, p_item);
-    p_queue->count++;
-    cnd_signal(&p_queue->cnd);
-    mutex_unlock(&p_queue->mtx);
-    return true;
-  }
-  return false;
 }
 
-static inline bool ts_queue_dequeue(ts_queue_t* p_queue, ts_queue_item_t** pp_item, uint32_t wait_ms)
+static inline bool ts_queue_enqueue(ts_queue_t* p_queue, void* p_item, uint32_t wait_ms)
+{
+  struct timespec ts = {0};
+  bool retval = false;
+
+  clock_gettime(CLOCK_REALTIME, &ts);
+  if(wait_ms != WAIT_FOREVER) {
+    ts.tv_sec += wait_ms/1000;
+    ts.tv_nsec += ((long)wait_ms % 1000) * 1000000;
+  }
+  if(p_queue && p_item) {
+    mutex_lock(&p_queue->mtx, WAIT_FOREVER);
+    int rval = 0;
+    while(p_queue->tail + p_queue->size <= p_queue->head && rval != thrd_timedout) {
+      rval = cnd_timedwait(&p_queue->full_cnd, &p_queue->mtx.mtx, &ts);
+    }
+    if(rval != thrd_timedout) {
+      p_queue->pp_ptr_array[atomic_fetch_add(&p_queue->head, 1) & (p_queue->size - 1)] = p_item;
+      p_queue->count++;
+      cnd_signal(&p_queue->cnd);
+      retval = true;
+    }
+    mutex_unlock(&p_queue->mtx);
+    return retval;
+  }
+  return retval;
+}
+
+static inline bool ts_queue_dequeue(ts_queue_t* p_queue, void** pp_item, uint32_t wait_ms)
 {
   bool retval = false;
-  bool blocking = true;
   struct timespec ts = {0};
+  clock_gettime(CLOCK_REALTIME, &ts);
 
   if(wait_ms != WAIT_FOREVER) {
-    blocking = false;
-    ts = { .tv_sec = wait_ms/1000, .tv_nsec = ((long)wait_ms % 1000) * 1000000};
+    ts.tv_sec += wait_ms/1000;
+    ts.tv_nsec += ((long)wait_ms % 1000) * 1000000;
   }
   if(p_queue && pp_item) {
+    int rval = 0;
     //This is always blocking because the mutex is only taken for non-blocking operations.
     //Only the condition variable wait is timed, since there is no bound on how long it will
     //take for an item to be enqueued onto the queue.
     mutex_lock(&p_queue->mtx, WAIT_FOREVER);
-    if(p_queue->count > 0) {
-      *pp_item = kqueue_dequeue(&p_queue->queue);
+    while(p_queue->tail >= p_queue->head && rval != thrd_timedout) {
+      rval = cnd_timedwait(&p_queue->cnd, &p_queue->mtx.mtx, &ts);
+    }
+    if(rval != thrd_timedout) {
+      *pp_item = p_queue->pp_ptr_array[atomic_fetch_add(&p_queue->tail, 1) & (p_queue->size - 1)];
       p_queue->count--;
+      cnd_signal(&p_queue->full_cnd);
       retval = true;
-    } else{
-      int rval = 0;
-      do {
-        if(blocking) {
-          rval = cnd_wait(&p_queue->cnd, &p_queue->mtx.mtx);
-        } else {
-          rval = cnd_timedwait(&p_queue->cnd, &p_queue->mtx.mtx, &ts);
-        }
-      }while(p_queue->count == 0 && (rval == 0 || rval != thrd_timedout));
-      if(p_queue->count > 0) {
-        *pp_item = kqueue_dequeue(&p_queue->queue);
-        p_queue->count--;
-        retval = true;
-      }
     }
     mutex_unlock(&p_queue->mtx);
   }
