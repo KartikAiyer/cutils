@@ -60,7 +60,10 @@ static inline bool mutex_lock(mutex_t *mutex, uint32_t wait_ms)
     if(!wait_ms) {
       retval = !mtx_trylock(&mutex->mtx);
     } else {
-      struct timespec tm = {.tv_sec = wait_ms / 1000, .tv_nsec = static_cast<long>((wait_ms % 1000) * 1000000)};
+      struct timespec tm = {0};
+      clock_gettime(CLOCK_REALTIME, &tm);
+      tm.tv_sec += wait_ms/1000;
+      tm.tv_nsec += 1000000 * ( wait_ms % 1000);
       retval = (!mtx_timedlock(&mutex->mtx, &tm));
     }
   }
