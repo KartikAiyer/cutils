@@ -51,7 +51,7 @@ typedef struct
   ts_queue_t *q;
   size_t num_of_elements;
   size_t element_size;
-  size_t offset_header_from_data;
+  size_t offset_data_from_header;
 } pool_t;
 
 typedef struct _pool_header_t
@@ -101,7 +101,7 @@ typedef struct _pool_create_params_t
   uint32_t element_size_requested;
   uint32_t total_element_size;
   uint8_t *p_backing;
-  uint32_t offset_header_from_data;
+  size_t offset_data_from_header;
   ts_queue_create_params_t queue_params;
 } pool_create_params_t;
 
@@ -121,7 +121,7 @@ memset(&(params), 0, sizeof((params)));\
 (params).element_size_requested = sizeof(POOL_STORE(name).elements[0].data);\
 (params).total_element_size = sizeof(POOL_STORE(name).elements[0]);\
 (params).p_backing = (uint8_t*)POOL_STORE(name).elements;\
-(params).offset_header_from_data = (size_t)POOL_STORE(name).elements[0].data - (size_t)&POOL_STORE(name).elements[0].header;\
+(params).offset_data_from_header = (size_t)POOL_STORE(name).elements[0].data - (size_t)&POOL_STORE(name).elements[0].header;\
 TS_QUEUE_STORE_CREATE_PARAMS_INIT((params).queue_params, pool_##name)
 
 #define POOL_ELEMENT_HEADER_SANITY      (0xDEADBEEF)
@@ -143,16 +143,16 @@ static inline pool_t *pool_create(pool_create_params_t *create_params)
     if (create_params->p_pool->q) {
       create_params->p_pool->num_of_elements = create_params->num_of_elements;
       create_params->p_pool->element_size = create_params->element_size_requested;
-      create_params->p_pool->offset_header_from_data = create_params->offset_header_from_data;
+      create_params->p_pool->offset_data_from_header = create_params->offset_data_from_header;
       for (uint32_t i = 0; i < create_params->num_of_elements; i++) {
         uint8_t *data =
-            create_params->p_backing + (i * create_params->total_element_size) + create_params->offset_header_from_data;
-        pool_header_t *p_header = (pool_header_t*)(data - create_params->offset_header_from_data);
+            create_params->p_backing + (i * create_params->total_element_size) + create_params->offset_data_from_header;
+        pool_header_t *p_header = (pool_header_t*)(data - create_params->offset_data_from_header);
         uint32_t *p_trailer_sanity;
         memset(p_header, 0, sizeof(pool_header_t));
         p_header->sanity = POOL_ELEMENT_HEADER_SANITY;
         atomic_init(&p_header->retain_count, 0);
-        p_trailer_sanity = (uint32_t*)data + create_params->element_size_requested;
+        p_trailer_sanity = (uint32_t*)((size_t)data + create_params->element_size_requested);
         *p_trailer_sanity = POOL_ELEMENT_TRAILER_SANITY;
         ts_queue_enqueue(create_params->p_pool->q, data, NO_SLEEP);
       }
@@ -188,7 +188,7 @@ pool_alloc_blocking(pool_t *p_pool, uint32_t wait_ms, pool_element_destructor_f 
   if (p_pool) {
     pool_header_t *p_header = 0;
     if (ts_queue_dequeue(p_pool->q, &retval, wait_ms)) {
-      p_header = (pool_header_t*)((uint8_t*)retval - p_pool->offset_header_from_data);
+      p_header = (pool_header_t*)((uint8_t*)retval - p_pool->offset_data_from_header);
       CUTILS_ASSERT(p_header->sanity == POOL_ELEMENT_HEADER_SANITY);
       CUTILS_ASSERT(*((uint32_t *) (retval + p_pool->element_size)) == POOL_ELEMENT_TRAILER_SANITY);
       atomic_fetch_add_explicit(&p_header->retain_count, 1, memory_order_relaxed);
@@ -217,7 +217,7 @@ static inline void *pool_alloc(pool_t *p_pool)
 static inline void pool_retain(pool_t *p_pool, void *p_mem)
 {
   if (p_pool) {
-    pool_header_t *p_header = p_mem - p_pool->offset_header_from_data;
+    pool_header_t *p_header = p_mem - p_pool->offset_data_from_header;
     CUTILS_ASSERT(p_header->sanity == POOL_ELEMENT_HEADER_SANITY);
     CUTILS_ASSERT(*((uint32_t *) (p_mem + p_pool->element_size)) == POOL_ELEMENT_TRAILER_SANITY);
     atomic_fetch_add_explicit(&p_header->retain_count, 1, memory_order_relaxed);
@@ -234,7 +234,7 @@ static inline void pool_retain(pool_t *p_pool, void *p_mem)
 static inline void pool_free(pool_t *p_pool, void *p_mem)
 {
   if (p_pool) {
-    pool_header_t *p_header = p_mem - p_pool->offset_header_from_data;
+    pool_header_t *p_header = p_mem - p_pool->offset_data_from_header;
     uint32_t old_retain_count;
     CUTILS_ASSERT(p_header->sanity == POOL_ELEMENT_HEADER_SANITY);
     CUTILS_ASSERT(*((uint32_t *) (p_mem + p_pool->element_size)) == POOL_ELEMENT_TRAILER_SANITY);
@@ -258,7 +258,7 @@ static inline void
 pool_set_destructor(pool_t *p_pool, void *p_mem, pool_element_destructor_f fnDestroy, void *destructor_private)
 {
   if (p_pool && p_mem) {
-    pool_header_t *p_header = p_mem - p_pool->offset_header_from_data;
+    pool_header_t *p_header = p_mem - p_pool->offset_data_from_header;
     CUTILS_ASSERT(p_header->sanity == POOL_ELEMENT_HEADER_SANITY);
     CUTILS_ASSERT(*((uint32_t *) (p_mem + p_pool->element_size)) == POOL_ELEMENT_TRAILER_SANITY);
     p_header->destructor = fnDestroy;

@@ -25,6 +25,7 @@
 #include <cutils/pool.h>
 #include <cutils/task.h>
 #include <cutils/klist.h>
+#include <cutils/signal.h>
 #include <embUnit/embUnit.h>
 #include <cutils/logger.h>
 #include <stdlib.h>
@@ -64,7 +65,7 @@ POOL_STORE_DEF(pool_test3);
     TEST_ASSERT_MESSAGE(alloc, "Couldn't allocate from pool" );\
     TEST_ASSERT_MESSAGE(((size_t)alloc & (_##name##_ALIGN - 1)) == 0, "Allocation not aligned");\
     memset(alloc, 0, p_pool->element_size);\
-    pool_header_t* p_header = (pool_header_t*)((uint8_t*)alloc - p_pool->offset_header_from_data);\
+    pool_header_t* p_header = (pool_header_t*)((uint8_t*)alloc - p_pool->offset_data_from_header);\
     TEST_ASSERT_MESSAGE(POOL_ELEMENT_HEADER_SANITY == p_header->sanity, "Header sanity is not valid");\
     TEST_ASSERT_MESSAGE(POOL_ELEMENT_TRAILER_SANITY == *((uint32_t*)(alloc + p_pool->element_size)), "Footer sanity does not match"  );\
     KLIST_HEAD_PREPEND(head, alloc);\
@@ -119,7 +120,7 @@ static void pool_test_ref_count(void)
     TEST_ASSERT_MESSAGE(alloc, "Couldn't allocate from pool");
     TEST_ASSERT_MESSAGE(((size_t) alloc & (_pool_test3_ALIGN - 1)) == 0, "Allocation not aligned");
     pool_header_t *p_header = (pool_header_t *) ((uint8_t *) alloc -
-                                                 p_pool->offset_header_from_data);
+                                                 p_pool->offset_data_from_header);
     TEST_ASSERT_MESSAGE(POOL_ELEMENT_HEADER_SANITY == p_header->sanity, "Header sanity is not valid");\
     TEST_ASSERT_MESSAGE(POOL_ELEMENT_TRAILER_SANITY == *((uint32_t *) (alloc + p_pool->element_size)),
                         "Footer sanity does not match");\
@@ -139,7 +140,7 @@ static void pool_test_ref_count(void)
     KLIST_HEAD_POP(head, alloc);
     TEST_ASSERT_NOT_NULL(alloc);
     pool_header_t *p_header = (pool_header_t *) ((uint8_t *) alloc -
-                                                 p_pool->offset_header_from_data);
+                                                 p_pool->offset_data_from_header);
     TEST_ASSERT_MESSAGE(POOL_ELEMENT_HEADER_SANITY == p_header->sanity, "Header sanity is not valid");\
     TEST_ASSERT_MESSAGE(POOL_ELEMENT_TRAILER_SANITY == *((uint32_t *) (alloc + p_pool->element_size)),
                         "Footer sanity does not match");\
@@ -162,7 +163,7 @@ static void setUp(void)
 static void tearDown(void)
 {}
 
-#if 0
+#if 1
 /**
  * @brief The following unit test attempts to test the reference counting of the pool across a number of threads
  * It creates a high priority launcher thread whose job is to create a large number of test threads of lower priority
@@ -200,7 +201,7 @@ static void cleanup_launcher(pool_retain_test_data_t *p_test_data)
 {
   task_t *p_launcher_task = &p_test_data->p_launcher_store->tsk;
   task_destroy_static(p_launcher_task);
-  AmbaKAL_BytePoolFree(p_test_data->p_launcher_store);
+  free(p_test_data->p_launcher_store);
   p_test_data->p_launcher_store = 0;
 }
 
@@ -210,13 +211,13 @@ static void cleanup_retainers(pool_retain_test_data_t *p_test_data)
     if (p_test_data->retainerStores[i]) {
       task_t *p_task = &p_test_data->retainerStores[i]->tsk;
       task_destroy_static(p_task);
-      AmbaKAL_BytePoolFree(p_test_data->retainerStores[i]);
+      free(p_test_data->retainerStores[i]);
       p_test_data->retainerStores[i] = 0;
     }
   }
 }
 
-static void pool_retainer_action(void *ctx)
+static int pool_retainer_action(void *ctx)
 {
   pool_retain_test_data_t *p_test_data = (pool_retain_test_data_t *) ctx;
   pool_retain(p_test_data->p_pool, p_test_data->alloc);
@@ -224,23 +225,22 @@ static void pool_retainer_action(void *ctx)
   task_sleep(timeout);
   pool_free(p_test_data->p_pool, p_test_data->alloc);
   atomic_fetch_add_explicit(&p_test_data->complete_count, 1, memory_order_relaxed);
+  return 0;
 }
 
-static void launcher_action(void *ctx)
+static int launcher_action(void *ctx)
 {
   pool_retain_test_data_t *p_test_data = (pool_retain_test_data_t *) ctx;
 
   for (uint32_t i = 0; i < NUM_OF_THREADS; i++) {
-    if (AmbaKAL_BytePoolAllocate(&AmbaBytePool_Cached,
-                                 (void **) &p_test_data->retainerStores[i],
-                                 sizeof(TASK_STATIC_STORE_T(retainer_task)),
-                                 AMBA_KAL_NO_WAIT) == OK) {
+    p_test_data->retainerStores[i] = malloc(sizeof(TASK_STATIC_STORE_T(retainer_task)));
+    if (p_test_data->retainerStores[i]) {
       task_create_params_t retainer_params = {
           .task = &p_test_data->retainerStores[i]->tsk,
           .stack = p_test_data->retainerStores[i]->stack,
           .stack_size = sizeof(p_test_data->retainerStores[i]->stack),
           .label = "RetainerTask",
-          .priority = RYLO_TASK_PRIORITY_MID_LO,
+          .priority = CUTILS_TASK_PRIORITY_MID_LO,
           .func = pool_retainer_action,
           .ctx = p_test_data
       };
@@ -258,6 +258,7 @@ static void launcher_action(void *ctx)
     }
   }
   signal_send(&p_test_data->launcher_exit);
+  return 0;
 }
 
 static void destructor_fn(void *mem, void *private)
@@ -291,22 +292,21 @@ static void pool_multi_thread_alloc_test(void)
       signal_free(&s_test_data2.launcher_exit);
       TEST_ASSERT_MESSAGE(0, "Failed to create an allocation from the pool");
     }
-    if (AmbaKAL_BytePoolAllocate(&AmbaBytePool_Cached,
-                                 (void **) &s_test_data2.p_launcher_store,
-                                 sizeof(TASK_STATIC_STORE_T(launcher_task)),
-                                 AMBA_KAL_NO_WAIT) == OK) {
+    s_test_data2.p_launcher_store = malloc(sizeof(TASK_STATIC_STORE_T(launcher_task)));
+
+    if (s_test_data2.p_launcher_store) {
       task_create_params_t launcher_params = {
           .task = &s_test_data2.p_launcher_store->tsk,
           .stack = s_test_data2.p_launcher_store->stack,
           .stack_size = sizeof(s_test_data2.p_launcher_store->stack),
-          .priority = RYLO_TASK_PRIORITY_HIGHEST,
+          .priority = CUTILS_TASK_PRIORITY_HIGHEST,
           .label = "LauncherTask",
           .func = launcher_action,
           .ctx = &s_test_data2
       };
       launcher_task = task_new_static(&launcher_params);
       if (!launcher_task) {
-        AmbaKAL_BytePoolFree(s_test_data2.p_launcher_store);
+        free(s_test_data2.p_launcher_store);
         pool_free(s_test_data2.p_pool, s_test_data2.alloc);
         pool_destroy(s_test_data2.p_pool);
         signal_free(&s_test_data2.launcher_exit);
@@ -366,7 +366,7 @@ TestRef pool_get_tests()
       new_TestFixture("Pool is created with proper alignments using create params 3",
                       pool_static_should_create_with_params_aligned_allocations_test3),
       new_TestFixture("Pool allocations can be reference counted", pool_test_ref_count),
-//      new_TestFixture("Pool allocations can be referenced counted across many threads", pool_multi_thread_alloc_test)
+      new_TestFixture("Pool allocations can be referenced counted across many threads", pool_multi_thread_alloc_test)
   };
   EMB_UNIT_TESTCALLER(pool_basic_test, "PoolBasicTests", setUp, tearDown, fixtures);
   return (TestRef) &pool_basic_test;
