@@ -44,7 +44,7 @@ extern "C" {
 #ifndef CUTILS_ASSERT
 #define CUTILS_ASSERT(x) {\
   if(!(x)) {\
-    *((volatile chary *)0) = 1;\
+    *((volatile char *)0) = 1;\
   }\
 }
 #endif

@@ -125,6 +125,13 @@ AmbaUtility_HighResolutionTimerStart() needs to be called somewhere earlier. */
   ((byte) & 0x02 ? '1' : '0'), \
   ((byte) & 0x01 ? '1' : '0')
 
+#define CUTILS_ASSERTF(cnd, str, ...) {\
+  if(!(cnd)) {\
+    CLOG(#cnd " Assertion failed @ %s line %u: " str, __FILE__, __LINE__, ##__VA_ARGS__);\
+  }\
+  *((volatile char*)0) =1;\
+}
+
 #ifdef __cplusplus
 };
 #endif

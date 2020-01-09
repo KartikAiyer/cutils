@@ -44,8 +44,6 @@ typedef struct {
   atomic_ulong tail;
 }ts_queue_t;
 
-typedef KListElem ts_queue_item_t;
-
 #define TS_QUEUE_STORE(name)      _ts_queue_store_##name
 #define TS_QUEUE_STORE_T(name)    _ts_queue_store_##name##_t
 #define TS_QUEUE_STORE_DECL(name, size) \
