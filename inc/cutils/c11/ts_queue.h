@@ -110,7 +110,11 @@ static inline bool ts_queue_enqueue(ts_queue_t* p_queue, void* p_item, uint32_t 
     mutex_lock(&p_queue->mtx, WAIT_FOREVER);
     int rval = 0;
     while(p_queue->tail + p_queue->size <= p_queue->head && rval != thrd_timedout) {
-      rval = cnd_timedwait(&p_queue->full_cnd, &p_queue->mtx.mtx, &ts);
+      if(wait_ms == WAIT_FOREVER) {
+        rval = cnd_wait(&p_queue->full_cnd, &p_queue->mtx.mtx);
+      } else {
+        rval = cnd_timedwait(&p_queue->full_cnd, &p_queue->mtx.mtx, &ts);
+      }
     }
     if(rval != thrd_timedout) {
       p_queue->pp_ptr_array[atomic_fetch_add(&p_queue->head, 1) & (p_queue->size - 1)] = p_item;
@@ -141,9 +145,13 @@ static inline bool ts_queue_dequeue(ts_queue_t* p_queue, void** pp_item, uint32_
     //take for an item to be enqueued onto the queue.
     mutex_lock(&p_queue->mtx, WAIT_FOREVER);
     while(p_queue->tail >= p_queue->head && rval != thrd_timedout) {
-      rval = cnd_timedwait(&p_queue->cnd, &p_queue->mtx.mtx, &ts);
+      if(wait_ms == WAIT_FOREVER) {
+        rval = cnd_wait(&p_queue->cnd, &p_queue->mtx.mtx);
+      } else {
+        rval = cnd_timedwait(&p_queue->cnd, &p_queue->mtx.mtx, &ts);
+      }
     }
-    if(rval != thrd_timedout) {
+    if(rval == thrd_success) {
       *pp_item = p_queue->pp_ptr_array[atomic_fetch_add(&p_queue->tail, 1) & (p_queue->size - 1)];
       p_queue->count--;
       cnd_signal(&p_queue->full_cnd);
