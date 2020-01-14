@@ -37,4 +37,8 @@ target_include_directories(pool_tests PRIVATE "${PROJECT_SOURCE_DIR}/extern/embu
 target_link_libraries(pool_tests cutils embunit)
 target_compile_features(pool_tests PRIVATE c_std_11)
 
+add_executable(dispatch_queue_tests dispatch_queue_tests.c)
+target_include_directories(dispatch_queue_tests PRIVATE "${PROJECT_SOURCE_DIR}/extern/embunit" "${LIBRARY_INCLUDE_DIR}")
+target_link_libraries(dispatch_queue_tests cutils embunit)
+target_compile_features(dispatch_queue_tests PRIVATE c_std_11)
 
