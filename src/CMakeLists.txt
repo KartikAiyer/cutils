@@ -5,7 +5,6 @@ file( GLOB HEADER_LIST CONFIGURE_DEPENDS "${cutils_SOURCE_DIR}/inc/cutils/*.h" )
 #Currently only C11 APIs supported
 set( CUTILS_PLATFORM_TYPE c11 )
 set( TEMPLATE_HEADER_LOCATION ${cutils_SOURCE_DIR}/inc )
-message( ${TEMPLATE_HEADER_LOCATION} )
 
 configure_file( ${TEMPLATE_HEADER_LOCATION}/cutils/mutex.h.in ${PROJECT_BINARY_DIR}/inc/cutils/mutex.h )
 configure_file( ${TEMPLATE_HEADER_LOCATION}/cutils/task.h.in ${PROJECT_BINARY_DIR}/inc/cutils/task.h )
@@ -34,7 +33,6 @@ add_library( cutils ${SOURCES} ${HEADER_LIST} )
 target_include_directories( cutils PUBLIC ${API_INCLUDES} )
 target_compile_features( cutils PUBLIC c_std_11 )
 target_link_libraries( cutils platform_abstraction )
-get_target_property( TARGET_SOURCES cutils SOURCES )
 
 source_group( TREE "${PROJECT_SOURCE_DIR}/inc" PREFIX "Header Files" FILES ${HEADER_LIST} )
 

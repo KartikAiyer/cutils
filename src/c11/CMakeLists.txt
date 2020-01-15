@@ -10,8 +10,5 @@ target_compile_features(platform_abstraction PUBLIC c_std_11)
 target_compile_definitions(platform_abstraction PUBLIC -DUSE_STD_PRINTF)
 target_link_libraries(platform_abstraction ${CMAKE_THREAD_LIBS_INIT})
 target_include_directories(platform_abstraction PUBLIC ${API_INCLUDES})
-get_target_property(TARGET_SOURCES platform_abstraction SOURCES)
-message("Sources")
-print_list("${TARGET_SOURCES}")
 
 
