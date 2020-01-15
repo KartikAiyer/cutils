@@ -24,8 +24,6 @@ target_compile_features(queue_tests PRIVATE cxx_std_17 c_std_11)
 target_include_directories(queue_tests PRIVATE "${LIBRARY_INCLUDE_DIR}")
 target_link_libraries(queue_tests cutils)
 get_target_property(TARGET_INCLUDES queue_tests INCLUDE_DIRECTORIES)
-message("Includes")
-print_list("${TARGET_INCLUDES}")
 
 package_add_test(all_tests queue_tests.cpp os_test.cpp mem_ring_buffer_test.cpp klist_test.cpp)
 target_compile_features(all_tests PRIVATE cxx_std_17 c_std_11)
