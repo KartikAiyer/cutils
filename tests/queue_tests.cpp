@@ -257,12 +257,11 @@ protected:
       post_data(data);
     }
   }
-  static int prod_task(void* ctx)
+  static void prod_task(void* ctx)
   {
     ts_queue_test *p_test = (ts_queue_test*)ctx;
-    return 0;
   }
-  static int cons_task(void* ctx) {
+  static void cons_task(void* ctx) {
     void *item = 0;
     ts_queue_test *p_test = (ts_queue_test*)ctx;
 
@@ -271,14 +270,13 @@ protected:
       auto test_data = (task_data_t*)item;
       if(test_data->val == 9999) {
         p_test->free_data(test_data);
-        return 0;
+        return;
       }
       if(test_data->fn) {
         test_data->fn(test_data);
       }
     }
     p_test->m_error_code = ConsumerFailed;
-    return -1;
   }
 
   ts_queue_t *m_queue;

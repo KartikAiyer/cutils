@@ -24,7 +24,7 @@
 
 #include <cutils/dispatch_queue.h>
 
-static int dispatch_queue_worker(void *ctx)
+static void dispatch_queue_worker(void *ctx)
 {
   dispatch_queue_t *p_queue = (dispatch_queue_t *) ctx;
   while (1) {
@@ -39,7 +39,6 @@ static int dispatch_queue_worker(void *ctx)
     }
   }
   signal_send(&p_queue->signal);
-  return 0;
 }
 
 dispatch_queue_t *dispatch_queue_create(dispatch_queue_create_params_t *params)
