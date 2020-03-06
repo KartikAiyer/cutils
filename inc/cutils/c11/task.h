@@ -42,12 +42,14 @@ extern "C" {
 /**
  * @brief Prototype for task_t function callbcak
  */
-typedef int (*task_func_t )(void *);
+typedef void (*task_func_t )(void *);
 
 typedef struct _task_t
 {
   thrd_t task;
   char label[30];
+  task_func_t func;
+  void *ctx;
 } task_t;
 
 typedef struct _task_create_params_t

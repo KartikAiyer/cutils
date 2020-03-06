@@ -130,9 +130,9 @@ protected:
     event_flag_free(&m_flag);
     mutex_free(&m_mutex);
   }
-  static int test_thread_function(void *arg);
-  static int prempt_test_thread_hi(void *arg);
-  static int prempt_test_thread_mid(void *arg);
+  static void test_thread_function(void *arg);
+  static void prempt_test_thread_hi(void *arg);
+  static void prempt_test_thread_mid(void *arg);
 public:
   void set_value(uint32_t value) {
     m_value = value;
@@ -147,11 +147,10 @@ protected:
   uint32_t m_value;
 };
 
-int TaskTest::test_thread_function(void *arg)
+void TaskTest::test_thread_function(void *arg)
 {
   auto* p_task = (TaskTest*) arg;
   p_task->set_value(1);
-  return 0;
 }
 
 TEST_F(TaskTest, TaskApiTest)
@@ -167,17 +166,16 @@ TEST_F(TaskTest, TaskApiTest)
   task_destroy_static(p_task);
 }
 
-int TaskTest::prempt_test_thread_hi(void *arg)
+void TaskTest::prempt_test_thread_hi(void *arg)
 {
   auto * p_test = (TaskTest*)arg;
   mutex_lock(&p_test->m_mutex, WAIT_FOREVER);
   p_test->m_value= 20;
   mutex_unlock(&p_test->m_mutex);
   event_flag_send(&p_test->m_flag, 0x2);
-  return 0;
 }
 
-int TaskTest::prempt_test_thread_mid(void *arg)
+void TaskTest::prempt_test_thread_mid(void *arg)
 {
   uint32_t val = 0;
   bool keepRunning = true;
@@ -191,7 +189,6 @@ int TaskTest::prempt_test_thread_mid(void *arg)
     keepRunning = val == 0;
   }
   event_flag_send(&p_test->m_flag, 0x1);
-  return 0;
 }
 
 TASK_STATIC_STORE_DECL(thread_mid, 2048);
