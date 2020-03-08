@@ -52,11 +52,8 @@ protected:
 
 TEST_F(MutexTest, MutexApiShouldReturnValidData)
 {
-  ASSERT_TRUE(mtx_trylock(&m_mtx.mtx) == 0);
-  ASSERT_TRUE(mtx_trylock(&m_mtx.mtx) > 0);
   ASSERT_TRUE(mutex_unlock(&m_mtx));
   ASSERT_TRUE(mutex_lock(&m_mtx, 0));
-  ASSERT_TRUE( mtx_trylock(&m_mtx.mtx) > 0);
   ASSERT_TRUE(mutex_unlock(&m_mtx));
 }
 

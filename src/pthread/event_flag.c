@@ -23,7 +23,8 @@
  */
 
 #include <cutils/event_flag.h>
-
+#include <cutils/logger.h>
+#include <errno.h>
 
 bool event_flag_new(event_flag_t *p_flags)
 {
