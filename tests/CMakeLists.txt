@@ -40,3 +40,15 @@ target_include_directories(dispatch_queue_tests PRIVATE "${PROJECT_SOURCE_DIR}/e
 target_link_libraries(dispatch_queue_tests cutils embunit)
 target_compile_features(dispatch_queue_tests PRIVATE c_std_11)
 
+
+# The following unit test uses Malloc and so will only be available on platforms that support malloc.h
+CHECK_INCLUDE_FILE(malloc.h HAVE_MALLOC_H)
+CHECK_INCLUDE_FILE(stdlib.h HAVE_STDLIB_H)
+if(HAVE_MALLOC_H)
+if(HAVE_STDLIB_H)
+  add_executable(notifier_tests notifier_tests.c)
+  target_include_directories(notifier_tests PRIVATE "${PROJECT_SOURCE_DIR}/extern/embunit" "${LIBRARY_INCLUDE_DIR}")
+  target_link_libraries(notifier_tests cutils embunit)
+  target_compile_features(notifier_tests PRIVATE c_std_11)
+endif()
+endif()
