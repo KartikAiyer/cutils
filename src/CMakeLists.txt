@@ -35,7 +35,7 @@ else()
   message( FATAL_ERROR "Need a proper cutils platform type" )
 endif()
 
-set( SOURCES ring_buffer.c dispatch_queue.c notifier.c)
+set( SOURCES ring_buffer.c dispatch_queue.c notifier.c endian.c)
 add_library( cutils ${SOURCES} ${HEADER_LIST} )
 target_include_directories( cutils PUBLIC ${API_INCLUDES} )
 target_compile_features( cutils PUBLIC c_std_11 )
