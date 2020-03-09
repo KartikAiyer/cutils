@@ -89,7 +89,8 @@ void task_destroy_static(task_t *task)
 {
   if(task) {
     int res = 0;
-    pthread_join(task->task, (void**)&res);
+    res = pthread_join(task->task, (void**)0);
+    CUTILS_ASSERTF( !res, "Thread Join Failed");
   }
 }
 bool task_start(task_t *task)

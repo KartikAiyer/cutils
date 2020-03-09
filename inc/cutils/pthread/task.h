@@ -67,9 +67,10 @@ typedef struct _task_create_params_t
 
 #define TASK_STATIC_STORE(name) _task_store_##name
 
+// Stack alignment at 4K for 32-bit code and 1M for 64-bit
 #define TASK_STATIC_STORE_DECL(name, stack_size)\
 typedef struct {\
-  uint8_t stack[ (stack_size) ];\
+  alignas(1<<((sizeof(void*) == 4)?12 : 20)) uint8_t stack[ (stack_size) ];\
   task_t tsk;\
 }TASK_STATIC_STORE_T( name )
 

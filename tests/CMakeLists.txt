@@ -52,3 +52,13 @@ if(HAVE_STDLIB_H)
   target_compile_features(notifier_tests PRIVATE c_std_11)
 endif()
 endif()
+
+add_executable(accumulator_tests accumulator_tests.c)
+target_include_directories(accumulator_tests PRIVATE "${PROJECT_SOURCE_DIR}/extern/embunit" "${LIBRARY_INCLUDE_DIR}")
+target_link_libraries(accumulator_tests cutils embunit)
+target_compile_features(accumulator_tests PRIVATE c_std_11)
+
+add_executable(asyncio_tests asyncio_test.c)
+target_include_directories(asyncio_tests PRIVATE "${PROJECT_SOURCE_DIR}/extern/embunit" "${LIBRARY_INCLUDE_DIR}")
+target_link_libraries(asyncio_tests cutils embunit)
+target_compile_features(asyncio_tests PRIVATE c_std_11)
