@@ -62,3 +62,8 @@ add_executable(asyncio_tests asyncio_test.c)
 target_include_directories(asyncio_tests PRIVATE "${PROJECT_SOURCE_DIR}/extern/embunit" "${LIBRARY_INCLUDE_DIR}")
 target_link_libraries(asyncio_tests cutils embunit)
 target_compile_features(asyncio_tests PRIVATE c_std_11)
+
+add_executable(state_event_loop_tests state_event_loop_tests.c)
+target_include_directories(state_event_loop_tests PRIVATE "${PROJECT_SOURCE_DIR}/extern/embunit" "${LIBRARY_INCLUDE_DIR}")
+target_link_libraries(state_event_loop_tests cutils embunit)
+target_compile_features(state_event_loop_tests PRIVATE c_std_11)
