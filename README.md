@@ -23,4 +23,4 @@ You can then build the individual targets based on your generator.
 
 ### Docs
 
-Look throught the wiki to learn more about how to use the utilities.
+Look throught the [wiki](https://github.com/KartikAiyer/cutils/wiki) to learn more about how to use the utilities.
