@@ -217,7 +217,7 @@ static void cleanup_retainers(pool_retain_test_data_t *p_test_data)
   }
 }
 
-static int pool_retainer_action(void *ctx)
+static void pool_retainer_action(void *ctx)
 {
   pool_retain_test_data_t *p_test_data = (pool_retain_test_data_t *) ctx;
   pool_retain(p_test_data->p_pool, p_test_data->alloc);
@@ -225,10 +225,9 @@ static int pool_retainer_action(void *ctx)
   task_sleep(timeout);
   pool_free(p_test_data->p_pool, p_test_data->alloc);
   atomic_fetch_add_explicit(&p_test_data->complete_count, 1, memory_order_relaxed);
-  return 0;
 }
 
-static int launcher_action(void *ctx)
+static void launcher_action(void *ctx)
 {
   pool_retain_test_data_t *p_test_data = (pool_retain_test_data_t *) ctx;
 
@@ -258,7 +257,6 @@ static int launcher_action(void *ctx)
     }
   }
   signal_send(&p_test_data->launcher_exit);
-  return 0;
 }
 
 static void destructor_fn(void *mem, void *private)
