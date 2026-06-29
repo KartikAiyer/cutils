@@ -1,4 +1,9 @@
 cmake-build*/
 build*/
 .idea/
+.cache/
 compile_commands.json
+
+# MemPalace per-project files (issue #185)
+mempalace.yaml
+entities.json
