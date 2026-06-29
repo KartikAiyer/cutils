@@ -3,7 +3,13 @@ file( GLOB HEADER_LIST CONFIGURE_DEPENDS "${cutils_SOURCE_DIR}/inc/cutils/*.h" )
 
 #Configure the platform specific stuff
 #Currently only C11 APIs supported
-set( CUTILS_PLATFORM_TYPE pthread )
+set( CUTILS_PLATFORM_TYPE pthread CACHE STRING "cutils OS abstraction platform (pthread|c11)")
+set_property( CACHE CUTILS_PLATFORM_TYPE PROPERTY STRINGS pthread c11 )
+if(NOT "${CUTILS_PLATFORM_TYPE}" STREQUAL "pthread" AND
+   NOT "${CUTILS_PLATFORM_TYPE}" STREQUAL "c11")
+  message(FATAL_ERROR
+          "CUTILS_PLATFORM_TYPE must be 'pthread' or 'c11', got '${CUTILS_PLATFORM_TYPE}'")
+endif()
 set( TEMPLATE_HEADER_LOCATION ${cutils_SOURCE_DIR}/inc )
 
 configure_file( ${TEMPLATE_HEADER_LOCATION}/cutils/mutex.h.in ${PROJECT_BINARY_DIR}/inc/cutils/mutex.h )
@@ -17,8 +23,10 @@ function( print_list theList )
   endforeach()
 endfunction()
 # set up options
-option( USE_STD_PRTINTF "Use the std lib provided printf function for debug output" ON )
-if( "${USE_STD_PRINTF}" )
+option( USE_STD_PRINTF
+        "Use the std lib provided printf function for debug output"
+        ON )
+if( USE_STD_PRINTF )
   add_definitions( -DUSE_STD_PRINTF )
 endif()
 
