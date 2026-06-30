@@ -26,8 +26,7 @@
 
 static void log_buffer_char_push(log_buffer_t *pLb, char item);
 
-static bool log_buffer_filter_character(log_buffer_t *pLb, char character)
-{
+static bool log_buffer_filter_character(log_buffer_t *pLb, char character) {
   bool retval = true;
 
   // filter ansi escape sequences by looking for escape
@@ -50,8 +49,7 @@ static bool log_buffer_filter_character(log_buffer_t *pLb, char character)
   return retval;
 }
 
-bool log_buffer_init(log_buffer_t *pLb, char *pBuffer, uint32_t bufferSize)
-{
+bool log_buffer_init(log_buffer_t *pLb, char *pBuffer, uint32_t bufferSize) {
   bool retval = false;
 
   if (pLb && pBuffer && bufferSize) {
@@ -64,8 +62,7 @@ bool log_buffer_init(log_buffer_t *pLb, char *pBuffer, uint32_t bufferSize)
   return retval;
 }
 
-bool log_buffer_push(log_buffer_t *pLb, char *pString, uint32_t stringSize)
-{
+bool log_buffer_push(log_buffer_t *pLb, char *pString, uint32_t stringSize) {
   bool retval = false;
 
   if (pLb && pLb->isInit && pString && stringSize < pLb->bufferSize) {
@@ -81,8 +78,7 @@ bool log_buffer_push(log_buffer_t *pLb, char *pString, uint32_t stringSize)
   return retval;
 }
 
-bool log_buffer_char_pop(log_buffer_t *pLb, int8_t *pChar)
-{
+bool log_buffer_char_pop(log_buffer_t *pLb, int8_t *pChar) {
   bool retval = false;
 
   if (pLb && pChar && pLb->head != pLb->tail) {
@@ -93,8 +89,7 @@ bool log_buffer_char_pop(log_buffer_t *pLb, int8_t *pChar)
   return retval;
 }
 
-bool log_buffer_is_empty(log_buffer_t *pLb)
-{
+bool log_buffer_is_empty(log_buffer_t *pLb) {
   bool retval = false;
 
   if (pLb && pLb->isInit) {
@@ -103,8 +98,7 @@ bool log_buffer_is_empty(log_buffer_t *pLb)
   return retval;
 }
 
-static void log_buffer_char_push(log_buffer_t *pLb, char item)
-{
+static void log_buffer_char_push(log_buffer_t *pLb, char item) {
   if (pLb && item) {
     pLb->p_buffer[pLb->head] = item;
     pLb->head = ((pLb->head + 1) < pLb->bufferSize) ? (pLb->head + 1) : 0;
@@ -115,18 +109,14 @@ static void log_buffer_char_push(log_buffer_t *pLb, char item)
   }
 }
 
-void log_buffer_clear(log_buffer_t *pLb)
-{
+void log_buffer_clear(log_buffer_t *pLb) {
   if (pLb && pLb->isInit) {
     pLb->head = pLb->tail = 0;
   }
 }
 
-
-uint32_t log_buffer_current_size(log_buffer_t *pLb,
-                                 uint32_t *initial_chunk,
-                                 uint32_t *residue_bytes)
-{
+uint32_t
+log_buffer_current_size(log_buffer_t *pLb, uint32_t *initial_chunk, uint32_t *residue_bytes) {
   uint32_t ibytes = 0;
   uint32_t rbytes = 0;
 
@@ -144,7 +134,6 @@ uint32_t log_buffer_current_size(log_buffer_t *pLb,
   return (ibytes + rbytes);
 }
 
-uint32_t log_buffer_lines_from_size(uint32_t size)
-{
-  return  1 + ((size - 1) / LOG_MAX_LINE_LENGTH);
+uint32_t log_buffer_lines_from_size(uint32_t size) {
+  return 1 + ((size - 1) / LOG_MAX_LINE_LENGTH);
 }

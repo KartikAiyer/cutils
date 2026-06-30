@@ -24,12 +24,11 @@
 
 #include "cutils/ring_buffer.h"
 
-#include <stdatomic.h>
 #include <assert.h>
+#include <stdatomic.h>
 #include <string.h>
 
-ring_buffer_ref create_ring_buffer(ring_buffer_create_params_t *params)
-{
+ring_buffer_ref create_ring_buffer(ring_buffer_create_params_t *params) {
   struct ring_buffer *buffer = params->buffer;
 
   if (!buffer) {
@@ -45,76 +44,63 @@ ring_buffer_ref create_ring_buffer(ring_buffer_create_params_t *params)
   return buffer;
 }
 
-void ring_buffer_release(ring_buffer_ref buffer)
-{
-  ring_buffer_reset_at_offset(buffer, 0);
-}
+void ring_buffer_release(ring_buffer_ref buffer) { ring_buffer_reset_at_offset(buffer, 0); }
 
-bool ring_buffer_is_empty(ring_buffer_ref buffer)
-{
+bool ring_buffer_is_empty(ring_buffer_ref buffer) {
   return ring_buffer_get_bytes_available_for_read(buffer) == 0;
 }
 
-bool ring_buffer_is_full(ring_buffer_ref buffer)
-{
+bool ring_buffer_is_full(ring_buffer_ref buffer) {
   return ring_buffer_get_bytes_available_for_write(buffer) == 0;
 }
 
-data_range_t ring_buffer_get_total_range(ring_buffer_ref buffer)
-{
+data_range_t ring_buffer_get_total_range(ring_buffer_ref buffer) {
   return make_data_range(buffer->read_offset, buffer->size);
 }
 
-data_range_t ring_buffer_get_current_data_range(ring_buffer_ref buffer)
-{
+data_range_t ring_buffer_get_current_data_range(ring_buffer_ref buffer) {
   return make_data_range(buffer->read_offset, ring_buffer_get_bytes_available_for_read(buffer));
 }
 
-uint32_t ring_buffer_get_bytes_available_for_read(ring_buffer_ref buffer)
-{
+uint32_t ring_buffer_get_bytes_available_for_read(ring_buffer_ref buffer) {
   /*
    This unsynchronized access is perfectly safe.
-   There's a race condition in that it's not certain whether the read thread will see the old or new value of _writeOffset.
-   However, it doesn't matter. _writeOffset can only increase, and the number of available bytes can likewise only increase.
-   If it sees the old value, it still computes a number of available bytes that's correct, just slightly out of date.
-   If it sees the new value, then so much the better. Therefore, the reader is safe.
+   There's a race condition in that it's not certain whether the read thread will see the old or new
+   value of _writeOffset. However, it doesn't matter. _writeOffset can only increase, and the number
+   of available bytes can likewise only increase. If it sees the old value, it still computes a
+   number of available bytes that's correct, just slightly out of date. If it sees the new value,
+   then so much the better. Therefore, the reader is safe.
    */
-  return (uint32_t) (buffer->write_offset - buffer->read_offset);
+  return (uint32_t)(buffer->write_offset - buffer->read_offset);
 }
 
-uint32_t ring_buffer_get_bytes_available_for_write(ring_buffer_ref buffer)
-{
+uint32_t ring_buffer_get_bytes_available_for_write(ring_buffer_ref buffer) {
   /*
-   it's safe for the reader thread to modify _readOffset while the writer is calculating bytesAvailableForRead.
-   Advancing the read pointer decreases the number of available bytes, which increases the amount of write space.
-   If the writer thread sees the old value for _readOffset here, it computes the older, smaller amount of write space, which is still safe, just slightly stale.
+   it's safe for the reader thread to modify _readOffset while the writer is calculating
+   bytesAvailableForRead. Advancing the read pointer decreases the number of available bytes, which
+   increases the amount of write space. If the writer thread sees the old value for _readOffset
+   here, it computes the older, smaller amount of write space, which is still safe, just slightly
+   stale.
    */
   return buffer->size - ring_buffer_get_bytes_available_for_read(buffer);
 }
 
-uint32_t ring_buffer_get_size(ring_buffer_ref buffer)
-{
-  return buffer->size;
-}
+uint32_t ring_buffer_get_size(ring_buffer_ref buffer) { return buffer->size; }
 
-void ring_buffer_reset_at_offset(ring_buffer_ref buffer, uint32_t offset)
-{
+void ring_buffer_reset_at_offset(ring_buffer_ref buffer, uint32_t offset) {
   buffer->read_offset = offset;
   buffer->write_offset = offset;
 }
 
-static inline uint32_t bufferReadOffsetWithOffset(ring_buffer_ref buffer, uint32_t offset)
-{
+static inline uint32_t bufferReadOffsetWithOffset(ring_buffer_ref buffer, uint32_t offset) {
   return (buffer->read_offset + offset) % buffer->size;
 }
 
-static inline uint32_t bufferWriteOffset(ring_buffer_ref buffer)
-{
+static inline uint32_t bufferWriteOffset(ring_buffer_ref buffer) {
   return buffer->write_offset % buffer->size;
 }
 
-uint32_t ring_buffer_write_data(ring_buffer_ref buffer, const uint8_t *data, const uint32_t size)
-{
+uint32_t ring_buffer_write_data(ring_buffer_ref buffer, const uint8_t *data, const uint32_t size) {
 
   if (ring_buffer_is_full(buffer) || size == 0) {
     return 0;
@@ -135,7 +121,6 @@ uint32_t ring_buffer_write_data(ring_buffer_ref buffer, const uint8_t *data, con
     // contiguous
     const uint32_t bytes_to_copy = bytes_to_write < size ? bytes_to_write : size;
     memcpy(buffer->data + file_write_offset, data, bytes_to_copy);
-
   }
 
   // cache range read so it can be forwarded
@@ -152,14 +137,14 @@ uint32_t ring_buffer_write_data(ring_buffer_ref buffer, const uint8_t *data, con
   return bytes_to_write;
 }
 
-ring_buffer_data_t ring_buffer_get_data_at_range(ring_buffer_ref buffer, data_range_t requested_range, bool peek)
-{
+ring_buffer_data_t
+ring_buffer_get_data_at_range(ring_buffer_ref buffer, data_range_t requested_range, bool peek) {
   const data_range_t current_range = ring_buffer_get_current_data_range(buffer);
 
   ring_buffer_data_t data = {0};
 
-  if (ring_buffer_is_empty(buffer)
-      || !location_in_data_range(requested_range.location, current_range)) {
+  if (ring_buffer_is_empty(buffer) ||
+      !location_in_data_range(requested_range.location, current_range)) {
     return data;
   }
 
@@ -209,42 +194,33 @@ ring_buffer_data_t ring_buffer_get_data_at_range(ring_buffer_ref buffer, data_ra
   return data;
 }
 
-ring_buffer_data_t ring_buffer_get_data(ring_buffer_ref buffer, uint32_t length, bool peek)
-{
+ring_buffer_data_t ring_buffer_get_data(ring_buffer_ref buffer, uint32_t length, bool peek) {
   const data_range_t read_range = make_data_range(buffer->read_offset, length);
   return ring_buffer_get_data_at_range(buffer, read_range, peek);
 }
 
-void ring_buffer_clear_data(ring_buffer_ref buffer, uint32_t length)
-{
+void ring_buffer_clear_data(ring_buffer_ref buffer, uint32_t length) {
   const data_range_t current_range = ring_buffer_get_current_data_range(buffer);
   const uint32_t bytes_to_clear = MIN(length, current_range.length);
   buffer->read_offset += bytes_to_clear;
 }
 
-void ring_buffer_set_callback_context(ring_buffer_ref buffer, void *ctx)
-{
-  buffer->ctx = ctx;
-}
+void ring_buffer_set_callback_context(ring_buffer_ref buffer, void *ctx) { buffer->ctx = ctx; }
 
-void *ring_buffer_get_callback_context(ring_buffer_ref buffer)
-{
-  return buffer->ctx;
-}
+void *ring_buffer_get_callback_context(ring_buffer_ref buffer) { return buffer->ctx; }
 
-void ring_buffer_set_on_read_callback(ring_buffer_ref buffer, data_changed_at_range_f callback)
-{
+void ring_buffer_set_on_read_callback(ring_buffer_ref buffer, data_changed_at_range_f callback) {
   buffer->on_data_read_at_range = callback;
 }
 
-void ring_buffer_set_on_write_callback(ring_buffer_ref buffer, data_changed_at_range_f callback)
-{
+void ring_buffer_set_on_write_callback(ring_buffer_ref buffer, data_changed_at_range_f callback) {
   buffer->on_data_written_at_range = callback;
 }
 
-void ring_buffer_get_offsets(ring_buffer_ref buffer, uint32_t *size,
-                             uint32_t *base_read_offset, uint32_t *write_offset)
-{
+void ring_buffer_get_offsets(ring_buffer_ref buffer,
+                             uint32_t *size,
+                             uint32_t *base_read_offset,
+                             uint32_t *write_offset) {
   *size = buffer->size;
   *base_read_offset = buffer->read_offset;
   *write_offset = buffer->write_offset;

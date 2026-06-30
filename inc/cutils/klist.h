@@ -41,104 +41,124 @@ extern "C" {
  **/
 
 /**
- * @struct KListElem - Sentinel for all elements that wish to be 
+ * @struct KListElem - Sentinel for all elements that wish to be
  *         added to a list.
- *  
- * This holds the next and prev pointers. All data structures 
- * that need to be added to a list must have this as its first 
- * element. Thus if you want to put some arbitrary data into a 
- * KList, you need to encapsulate it in a data structure with 
- * KListElem being its first member and then use instances of 
- * that structure to insert. 
+ *
+ * This holds the next and prev pointers. All data structures
+ * that need to be added to a list must have this as its first
+ * element. Thus if you want to put some arbitrary data into a
+ * KList, you need to encapsulate it in a data structure with
+ * KListElem being its first member and then use instances of
+ * that structure to insert.
  */
-typedef struct _KListElem
-{
+typedef struct _KListElem {
   struct _KListElem *prev;
   struct _KListElem *next;
 } KListElem, KListHead, KListTail;
 
 /**
- * Callback that is executed on every element of a List when 
+ * Callback that is executed on every element of a List when
  * called using KLIST_HEAD_FOREACH
  */
-typedef void (*KListForEachCb) (KListElem * pElem, ...);
-typedef bool(*KListFindPredicate) (KListElem * pElem, ...);
+typedef void (*KListForEachCb)(KListElem *pElem, ...);
+typedef bool (*KListFindPredicate)(KListElem *pElem, ...);
 
-#define KLIST_HEAD_INIT( pHead )     do { if( (pHead) ){ (pHead)->prev = (pHead)->next = 0; } }while(0)
-#define KLIST_HEAD_FOREACH( pHead, fnHandler, handlerArgs... )  do {\
-                                                  KListElem *pElem = (pHead);\
-                                                  while( pElem ) {\
-                                                    KListElem *pNext = pElem->next;\
-                                                    fnHandler( pElem, ##handlerArgs );\
-                                                    pElem = pNext;\
-                                                  }\
-                                                }while( 0 )
-#define KLIST_HEAD_FIND_FIRST( pHead, pRetElem, fnHandler, handlerArgs... ) do\
-                                                  {\
-                                                    KListElem *pElem = (pHead);\
-                                                    while( pElem ) {\
-                                                      KListElem* pNext = pElem->next;\
-                                                      if( fnHandler( pElem, ##handlerArgs ) ) {\
-                                                        pRetElem = pElem;\
-                                                        break;\
-                                                      }\
-                                                      pElem = pNext;\
-                                                    }\
-                                                  }while(0)
-#define KLIST_HEAD_PREPEND( pHead, pItem ) do { \
-                                              if( (pItem) ) {\
-                                                if( (pHead) ) {\
-                                                  (pHead)->prev = ( KListElem* )(pItem);\
-                                                  ( ( KListElem* ) (pItem) )->prev = 0;\
-                                                  ( ( KListElem* ) (pItem) )->next = (pHead);\
-                                                }\
-                                                (pHead) = ( KListHead *)(pItem);\
-                                              }\
-                                             }while( 0 )
-#define KLIST_HEAD_POP( pHead, pItem )    do { \
-                                             if( (pHead) ) { \
-                                               KListElem** ppElem = ( ( KListElem** ) &(pItem) );\
-                                               *ppElem = (pHead);\
-                                               (pHead) = (pHead)->next;\
-                                               ( *ppElem )->next = ( *ppElem )->prev = 0;\
-                                             }\
-                                             else (pItem) = 0;\
-                                          }while( 0 )
-#define KLIST_TAIL_INIT( pTail )      do { if( (pTail) ) { (pTail)->prev = (pTail)->next = 0; } }while( 0 )
+#define KLIST_HEAD_INIT(pHead)                                                                     \
+  do {                                                                                             \
+    if ((pHead)) {                                                                                 \
+      (pHead)->prev = (pHead)->next = 0;                                                           \
+    }                                                                                              \
+  } while (0)
+#define KLIST_HEAD_FOREACH(pHead, fnHandler, handlerArgs...)                                       \
+  do {                                                                                             \
+    KListElem *pElem = (pHead);                                                                    \
+    while (pElem) {                                                                                \
+      KListElem *pNext = pElem->next;                                                              \
+      fnHandler(pElem, ##handlerArgs);                                                             \
+      pElem = pNext;                                                                               \
+    }                                                                                              \
+  } while (0)
+#define KLIST_HEAD_FIND_FIRST(pHead, pRetElem, fnHandler, handlerArgs...)                          \
+  do {                                                                                             \
+    KListElem *pElem = (pHead);                                                                    \
+    while (pElem) {                                                                                \
+      KListElem *pNext = pElem->next;                                                              \
+      if (fnHandler(pElem, ##handlerArgs)) {                                                       \
+        pRetElem = pElem;                                                                          \
+        break;                                                                                     \
+      }                                                                                            \
+      pElem = pNext;                                                                               \
+    }                                                                                              \
+  } while (0)
+#define KLIST_HEAD_PREPEND(pHead, pItem)                                                           \
+  do {                                                                                             \
+    if ((pItem)) {                                                                                 \
+      if ((pHead)) {                                                                               \
+        (pHead)->prev = (KListElem *)(pItem);                                                      \
+        ((KListElem *)(pItem))->prev = 0;                                                          \
+        ((KListElem *)(pItem))->next = (pHead);                                                    \
+      }                                                                                            \
+      (pHead) = (KListHead *)(pItem);                                                              \
+    }                                                                                              \
+  } while (0)
+#define KLIST_HEAD_POP(pHead, pItem)                                                               \
+  do {                                                                                             \
+    if ((pHead)) {                                                                                 \
+      KListElem **ppElem = ((KListElem **)&(pItem));                                               \
+      *ppElem = (pHead);                                                                           \
+      (pHead) = (pHead)->next;                                                                     \
+      (*ppElem)->next = (*ppElem)->prev = 0;                                                       \
+    } else                                                                                         \
+      (pItem) = 0;                                                                                 \
+  } while (0)
+#define KLIST_TAIL_INIT(pTail)                                                                     \
+  do {                                                                                             \
+    if ((pTail)) {                                                                                 \
+      (pTail)->prev = (pTail)->next = 0;                                                           \
+    }                                                                                              \
+  } while (0)
 
-#define KLIST_TAIL_APPEND( pTail, pItem )  do{\
-                                             if( (pItem) ) {\
-                                               if( (pTail) ) {\
-                                                 (pTail)->next = ( KListElem* )(pItem);\
-                                                 ( ( KListElem* ) (pItem) )->next = 0;\
-                                                 ( ( KListElem* ) (pItem) )->prev = (pTail);\
-                                               }\
-                                               (pTail) = ( KListTail* )(pItem);\
-                                             }\
-                                           }while( 0 )
+#define KLIST_TAIL_APPEND(pTail, pItem)                                                            \
+  do {                                                                                             \
+    if ((pItem)) {                                                                                 \
+      if ((pTail)) {                                                                               \
+        (pTail)->next = (KListElem *)(pItem);                                                      \
+        ((KListElem *)(pItem))->next = 0;                                                          \
+        ((KListElem *)(pItem))->prev = (pTail);                                                    \
+      }                                                                                            \
+      (pTail) = (KListTail *)(pItem);                                                              \
+    }                                                                                              \
+  } while (0)
 
-#define KLIST_REMOVE_ELEM( pElem )   do { \
-                                        KListElem *pEl = ( KListElem * )(pElem);\
-                                        if( pEl ){\
-                                          if( pEl->next ) { pEl->next->prev = pEl->prev; }\
-                                          if( pEl->prev ) { pEl->prev->next = pEl->next; }\
-                                          pEl->next = pEl->prev = 0;\
-                                        }\
-                                     }while( 0 )
+#define KLIST_REMOVE_ELEM(pElem)                                                                   \
+  do {                                                                                             \
+    KListElem *pEl = (KListElem *)(pElem);                                                         \
+    if (pEl) {                                                                                     \
+      if (pEl->next) {                                                                             \
+        pEl->next->prev = pEl->prev;                                                               \
+      }                                                                                            \
+      if (pEl->prev) {                                                                             \
+        pEl->prev->next = pEl->next;                                                               \
+      }                                                                                            \
+      pEl->next = pEl->prev = 0;                                                                   \
+    }                                                                                              \
+  } while (0)
 
-#define KLIST_HEAD_REMOVE_ELEM( pHead, pElem ) do {\
-                                      if( ( KListHead* )(pHead) == ( KListElem* )(pElem) ) {\
-                                        (pHead) = ( (KListElem*)(pElem) )->next;\
-                                      }\
-                                      KLIST_REMOVE_ELEM( (pElem) );\
-                                    }while( 0 )
+#define KLIST_HEAD_REMOVE_ELEM(pHead, pElem)                                                       \
+  do {                                                                                             \
+    if ((KListHead *)(pHead) == (KListElem *)(pElem)) {                                            \
+      (pHead) = ((KListElem *)(pElem))->next;                                                      \
+    }                                                                                              \
+    KLIST_REMOVE_ELEM((pElem));                                                                    \
+  } while (0)
 
-#define KLIST_TAIL_REMOVE_ELEM( pTail, pElem ) do {\
-                                      if( ( KListTail* )(pTail) == ( KListElem* )(pElem) ) {\
-                                        (pTail) = ( (KListElem*)(pElem) )->prev;\
-                                      }\
-                                      KLIST_REMOVE_ELEM( pElem );\
-                                    }while( 0 )
+#define KLIST_TAIL_REMOVE_ELEM(pTail, pElem)                                                       \
+  do {                                                                                             \
+    if ((KListTail *)(pTail) == (KListElem *)(pElem)) {                                            \
+      (pTail) = ((KListElem *)(pElem))->prev;                                                      \
+    }                                                                                              \
+    KLIST_REMOVE_ELEM(pElem);                                                                      \
+  } while (0)
 
 #ifdef __cplusplus
 }

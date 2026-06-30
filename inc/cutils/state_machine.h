@@ -26,23 +26,22 @@
 
 #include "state.h"
 /** Maximum number of states that a state machine can have. */
-#define STATE_MAC_MAX_STATES        20
+#define STATE_MAC_MAX_STATES 20
 
 /**
- * \struct StateMachine 
- * \brief Encapsulates a state machine 
- *  
- * This data structure encapsulates data specific to a state 
- * machine. A state machine contains an array of state pointers, 
- * which are registered with the state machine during the state 
- * machine's configuration. The configuration steps include 
- * 1) Create the state machine 
- * 2) Configure the State machine with all the states 
- * 3) Start the state machine. 
- *  
+ * \struct StateMachine
+ * \brief Encapsulates a state machine
+ *
+ * This data structure encapsulates data specific to a state
+ * machine. A state machine contains an array of state pointers,
+ * which are registered with the state machine during the state
+ * machine's configuration. The configuration steps include
+ * 1) Create the state machine
+ * 2) Configure the State machine with all the states
+ * 3) Start the state machine.
+ *
  */
-typedef struct _state_machine_t
-{
+typedef struct _state_machine_t {
   char *p_name;
   /** Number of states in the state machine. Used when
    *  iterating through state array */
@@ -65,100 +64,98 @@ typedef struct _state_machine_t
   logger_t logger;
 } state_machine_t;
 
-typedef struct _state_machine_create_params_t
-{
-  state_machine_t* p_state_mac;
-  char* p_name;
-  void* private_client_data;
+typedef struct _state_machine_create_params_t {
+  state_machine_t *p_state_mac;
+  char *p_name;
+  void *private_client_data;
   uint32_t start_state_id;
   bool should_log;
   uint32_t log_level;
-}state_machine_create_params_t;
+} state_machine_create_params_t;
 
-
-state_machine_t* state_machine_create(state_machine_create_params_t *params);
+state_machine_t *state_machine_create(state_machine_create_params_t *params);
 
 /**
- * State specific event handler 
- *  
- * The function will call the state specific event handler and 
- * will latch any state transition requested. 
- * 
- * 
+ * State specific event handler
+ *
+ * The function will call the state specific event handler and
+ * will latch any state transition requested.
+ *
+ *
  * @param pStateMac: StateMachine* - pointer to valid state
  *                 machine that has been started.
- * @param pEvent: AppEvent* - pointer to valid Event 
+ * @param pEvent: AppEvent* - pointer to valid Event
  */
-void state_machine_handle_event(state_machine_t * state_mac, void *event);
+void state_machine_handle_event(state_machine_t *state_mac, void *event);
 
 /**
  * Register state with state machine.
- *  
- * The function registers a fully allocated and initialized 
- * state with the state machine. Should be called before 
- * starting the state machine. 
- * 
- * 
- * @param pStateMac: StateMachine* - Pointer to valid state 
+ *
+ * The function registers a fully allocated and initialized
+ * state with the state machine. Should be called before
+ * starting the state machine.
+ *
+ *
+ * @param pStateMac: StateMachine* - Pointer to valid state
  *                 machine
- * @param pState: State* - Pointer to valid State 
+ * @param pState: State* - Pointer to valid State
  */
-void state_machine_register_state(state_machine_t * state_mac, state_t * state);
+void state_machine_register_state(state_machine_t *state_mac, state_t *state);
 
-/** 
- * Get state for requested stateId from state machine 
- *   
+/**
+ * Get state for requested stateId from state machine
+ *
  *  Returns the State* structure for the requested stateId
  *  (based on what was registered), from the provided state
  *  machine.
- *  
- * @param pStateMac: StateMachine* - pointer to valid state 
+ *
+ * @param pStateMac: StateMachine* - pointer to valid state
  *                 machine
- * @param stateId: uint32_t - valid state Id. 
- * 
+ * @param stateId: uint32_t - valid state Id.
+ *
  * @return State* - pointer to state structure requested or NULL
  *         if not found.
  */
-state_t *state_machine_get_state(state_machine_t * state_mac, uint32_t state_id);
+state_t *state_machine_get_state(state_machine_t *state_mac, uint32_t state_id);
 
 /**
- * Start the state machine. 
- *  
- * This will load the Inital state into the state machine and 
- * thus hook it up to the event handler. 
- * 
- * 
- * @param pStateMac: StateMachine* - pointer to valid state 
+ * Start the state machine.
+ *
+ * This will load the Inital state into the state machine and
+ * thus hook it up to the event handler.
+ *
+ *
+ * @param pStateMac: StateMachine* - pointer to valid state
  *                 machine
  * @param initialState: uint32_t - valid initial state id.
  */
 void state_machine_start(state_machine_t *state_mac);
 
 /**
- * StateMachineStop - This will stop the state machine. All 
- * subsequent events posted will be discarded. Calling this is 
- * not so simple. You should call this in the same context that 
- * the State Machine Events are handled, or you have to 
- * synchronoize between the state machine event hander thread 
- * and the poster of this. This will effectively stop the state 
- * machine from engaging.  
- * 
- * 
- * @param pStateMac -  
+ * StateMachineStop - This will stop the state machine. All
+ * subsequent events posted will be discarded. Calling this is
+ * not so simple. You should call this in the same context that
+ * the State Machine Events are handled, or you have to
+ * synchronoize between the state machine event hander thread
+ * and the poster of this. This will effectively stop the state
+ * machine from engaging.
+ *
+ *
+ * @param pStateMac -
  */
-void state_machine_stop(state_machine_t * state_mac);
+void state_machine_stop(state_machine_t *state_mac);
 
 /**
  * Executes state transition.
- * 
+ *
  *  Will execute a state transition if one is requested. The
  *  function is called by the event handler when it is ready to
  *  execute a state transition.
- *  
- * @param pStateMac: StateMachine* - pointer to valid state 
+ *
+ * @param pStateMac: StateMachine* - pointer to valid state
  *                 machine.
  */
-void state_machine_transition(state_machine_t * state_mac);
+void state_machine_transition(state_machine_t *state_mac);
 
 /**
  * @brief States machines can be supplied with client data which can retrieved
@@ -167,7 +164,7 @@ void state_machine_transition(state_machine_t * state_mac);
  * @param state_mac - A Valid State Machine
  * @return void* - NULL if no private data or the private data supplied in the create params
  */
-void* state_machine_get_private_data(state_machine_t* state_mac);
+void *state_machine_get_private_data(state_machine_t *state_mac);
 
 /**
  * @brief Clients supply private data to the state machine using this API. This can be retrieved
@@ -175,4 +172,4 @@ void* state_machine_get_private_data(state_machine_t* state_mac);
  * @param state_mac - Valid State machine pointer
  * @param private - Private data
  */
-void state_machine_set_private_data(state_machine_t* state_mac, void* private);
+void state_machine_set_private_data(state_machine_t *state_mac, void *private);

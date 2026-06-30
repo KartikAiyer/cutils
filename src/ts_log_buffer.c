@@ -25,8 +25,7 @@
 #include <cutils/ts_log_buffer.h>
 #include <stdio.h>
 
-bool ts_log_buffer_init(ts_log_buffer_t *pLb, char *pBuffer, uint32_t bufferSize)
-{
+bool ts_log_buffer_init(ts_log_buffer_t *pLb, char *pBuffer, uint32_t bufferSize) {
   bool retval = false;
 
   if (pLb) {
@@ -37,22 +36,21 @@ bool ts_log_buffer_init(ts_log_buffer_t *pLb, char *pBuffer, uint32_t bufferSize
   return retval;
 }
 
-void ts_log_buffer_deinit(ts_log_buffer_t *pLb)
-{
+void ts_log_buffer_deinit(ts_log_buffer_t *pLb) {
   if (pLb) {
     mutex_free(&pLb->mtx);
   }
 }
 
-void ts_log_buffer_push(ts_log_buffer_t *p_ts_log, char *string, uint32_t string_size)
-{
+void ts_log_buffer_push(ts_log_buffer_t *p_ts_log, char *string, uint32_t string_size) {
   if (p_ts_log) {
     mutex_lock(&p_ts_log->mtx, WAIT_FOREVER);
     if (p_ts_log->lb.isInit) {
       log_buffer_push(&p_ts_log->lb, string, string_size);
       ts_log_buffer_f fn = p_ts_log->fn;
       void *private = p_ts_log->private;
-      uint32_t used_lines = log_buffer_lines_from_size(log_buffer_current_size(&p_ts_log->lb, NULL, NULL));
+      uint32_t used_lines =
+          log_buffer_lines_from_size(log_buffer_current_size(&p_ts_log->lb, NULL, NULL));
       const uint32_t max_lines = log_buffer_lines_from_size(p_ts_log->lb.bufferSize) - 1;
       int32_t diff = max_lines - used_lines;
 
@@ -69,8 +67,9 @@ void ts_log_buffer_push(ts_log_buffer_t *p_ts_log, char *string, uint32_t string
   }
 }
 
-void ts_log_buffer_install_notifications(ts_log_buffer_t *p_ts_log, ts_log_buffer_f fn, void *private)
-{
+void ts_log_buffer_install_notifications(ts_log_buffer_t *p_ts_log,
+                                         ts_log_buffer_f fn,
+                                         void *private) {
   if (p_ts_log) {
     mutex_lock(&p_ts_log->mtx, WAIT_FOREVER);
     p_ts_log->fn = fn;
@@ -79,8 +78,9 @@ void ts_log_buffer_install_notifications(ts_log_buffer_t *p_ts_log, ts_log_buffe
   }
 }
 
-uint32_t ts_log_buffer_current_size(ts_log_buffer_t *p_lb, uint32_t *initial_bytes, uint32_t *residual_bytes)
-{
+uint32_t ts_log_buffer_current_size(ts_log_buffer_t *p_lb,
+                                    uint32_t *initial_bytes,
+                                    uint32_t *residual_bytes) {
   uint32_t retval = 0;
 
   if (p_lb) {

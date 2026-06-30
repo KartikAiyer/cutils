@@ -23,23 +23,21 @@
  */
 #pragma once
 
-#include <cutils/os_types.h>
 #include <cutils/c11/c11threads.h>
+#include <cutils/os_types.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef enum _event_flag_wait_type_e
-{
+typedef enum _event_flag_wait_type_e {
   WAIT_OR,
   WAIT_OR_CLEAR,
   WAIT_AND,
   WAIT_AND_CLEAR
 } event_flag_wait_type_e;
 
-typedef struct _event_flag_t
-{
+typedef struct _event_flag_t {
   cnd_t cv;
   mtx_t mtx;
   uint32_t val;
@@ -49,8 +47,11 @@ bool event_flag_new(event_flag_t *p_flags);
 
 bool event_flag_free(event_flag_t *p_flags);
 
-bool event_flag_wait(event_flag_t *p_flags, uint32_t required_flags, event_flag_wait_type_e wait_type,
-                                   uint32_t *p_actual_flags, uint32_t wait_ms);
+bool event_flag_wait(event_flag_t *p_flags,
+                     uint32_t required_flags,
+                     event_flag_wait_type_e wait_type,
+                     uint32_t *p_actual_flags,
+                     uint32_t wait_ms);
 
 bool event_flag_send(event_flag_t *p_flags, uint32_t flag_bits);
 

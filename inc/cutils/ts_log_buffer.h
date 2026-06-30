@@ -29,17 +29,16 @@
 #include <stdarg.h>
 #include <string.h>
 
-
 /**
  * @file ts_log_buffer.h
- * This file provides a thread safe API around log_buffers. It also allows clients to register notifications for
- * log buffer size events.
+ * This file provides a thread safe API around log_buffers. It also allows clients to register
+ * notifications for log buffer size events.
  */
 
-#define LOG_BUF_NOTIF(XX)\
-  XX( LB_FULL, )\
-  XX( LB_ALMOST_FULL, )\
-  XX( LB_EMPTY, )\
+#define LOG_BUF_NOTIF(XX)                                                                          \
+  XX(LB_FULL, )                                                                                    \
+  XX(LB_ALMOST_FULL, )                                                                             \
+  XX(LB_EMPTY, )
 
 DECLARE_ENUM(ts_log_buffer_notfication_e, LOG_BUF_NOTIF)
 
@@ -49,11 +48,11 @@ struct _ts_log_buffer_t;
  * @brief this callback signature allows clients to be notified when the log buffer hits certain
  * size thresholds.
  */
-typedef void (*ts_log_buffer_f)(struct _ts_log_buffer_t *pLb, ts_log_buffer_notfication_e notif,
+typedef void (*ts_log_buffer_f)(struct _ts_log_buffer_t *pLb,
+                                ts_log_buffer_notfication_e notif,
                                 void *private);
 
-typedef struct _ts_log_buffer_t
-{
+typedef struct _ts_log_buffer_t {
   log_buffer_t lb;
   mutex_t mtx;
   ts_log_buffer_f fn;
@@ -91,14 +90,18 @@ void ts_log_buffer_push(ts_log_buffer_t *p_ts_log, char *string, uint32_t string
  * @param fn - callback
  * @param private - callback context
  */
-void ts_log_buffer_install_notifications(ts_log_buffer_t *p_ts_log, ts_log_buffer_f fn, void *private);
+void ts_log_buffer_install_notifications(ts_log_buffer_t *p_ts_log,
+                                         ts_log_buffer_f fn,
+                                         void *private);
 
 /**
  * @brief Returns the current size of the log_buffer.
  * @param p_lb - Initialized Log Buffer
  * @param initial_bytes - If there is no wrap around, this is the total byte size
- * @param residual_bytes - If a wrap around occurs, this is the number of bytes from the head of the buffer to the last
- *                          character inserted
+ * @param residual_bytes - If a wrap around occurs, this is the number of bytes from the head of the
+ * buffer to the last character inserted
  * @return
  */
-uint32_t ts_log_buffer_current_size(ts_log_buffer_t *p_lb, uint32_t *initial_bytes, uint32_t *residual_bytes);
+uint32_t ts_log_buffer_current_size(ts_log_buffer_t *p_lb,
+                                    uint32_t *initial_bytes,
+                                    uint32_t *residual_bytes);

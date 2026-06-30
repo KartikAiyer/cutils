@@ -28,78 +28,77 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <stdint.h>
-#include <stdbool.h>
 #include <assert.h>
+#include <stdbool.h>
+#include <stdint.h>
 
-#define GetArraySize(x)                   ((sizeof((x)))/(sizeof((x)[0])))
+#define GetArraySize(x) ((sizeof((x))) / (sizeof((x)[0])))
 
 #ifndef MIN
-#    define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
 #ifndef MAX
-#    define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
 #ifndef CUTILS_ASSERT
-#define CUTILS_ASSERT(x) {\
-  if(!(x)) {\
-    *((volatile char *)0) = 1;\
-  }\
-}
+#define CUTILS_ASSERT(x)                                                                           \
+  {                                                                                                \
+    if (!(x)) {                                                                                    \
+      *((volatile char *)0) = 1;                                                                   \
+    }                                                                                              \
+  }
 #endif
 
 // expansion macro for enum value definition
-#define ENUM_VALUE( name, assign ) name assign,
+#define ENUM_VALUE(name, assign) name assign,
 
 // expansion macro for enum to string conversion
-#define ENUM_CASE( name, assign ) case name: return #name;
+#define ENUM_CASE(name, assign)                                                                    \
+  case name:                                                                                       \
+    return #name;
 
-#define ENUM_STRCMP( name, assign ) if( !strcmp( str, #name ) ) return name;
+#define ENUM_STRCMP(name, assign)                                                                  \
+  if (!strcmp(str, #name))                                                                         \
+    return name;
 
 // declare the access function and enum values
-#define DECLARE_ENUM( EnumType, ENUM_DEF ) \
-  typedef enum _##EnumType { \
-    ENUM_DEF( ENUM_VALUE ) \
-  }EnumType;\
-  static inline const char* get_##EnumType##_string( EnumType blah )\
-  {\
-     switch( blah ) {\
-       ENUM_DEF(ENUM_CASE)\
-       default: return "";\
-     }\
-  }\
-  static inline EnumType get_##EnumType##_value( const char* str )\
-  {\
-     ENUM_DEF(ENUM_STRCMP)\
-     return (EnumType)0;\
+#define DECLARE_ENUM(EnumType, ENUM_DEF)                                                           \
+  typedef enum _##EnumType{ENUM_DEF(ENUM_VALUE)} EnumType;                                         \
+  static inline const char *get_##EnumType##_string(EnumType blah) {                               \
+    switch (blah) {                                                                                \
+      ENUM_DEF(ENUM_CASE)                                                                          \
+    default:                                                                                       \
+      return "";                                                                                   \
+    }                                                                                              \
+  }                                                                                                \
+  static inline EnumType get_##EnumType##_value(const char *str) {                                 \
+    ENUM_DEF(ENUM_STRCMP)                                                                          \
+    return (EnumType)0;                                                                            \
   }
 
-#define DECLARE_ENUM_NONINLINE( EnumType, ENUM_DEF )\
-  typedef enum _##EnumType { \
-    ENUM_DEF( ENUM_VALUE ) \
-  }EnumType;\
-  const char* get_##EnumType##_string( EnumType blah );\
-  EnumType get_##EnumType##_value( const char* str );
+#define DECLARE_ENUM_NONINLINE(EnumType, ENUM_DEF)                                                 \
+  typedef enum _##EnumType{ENUM_DEF(ENUM_VALUE)} EnumType;                                         \
+  const char *get_##EnumType##_string(EnumType blah);                                              \
+  EnumType get_##EnumType##_value(const char *str);
 
-#define DEFINE_ENUM_STRINGIFY( EnumType, ENUM_DEF )\
-  const char* get_##EnumType##_string( EnumType blah )\
-  {\
-     switch( blah ) {\
-       ENUM_DEF(ENUM_CASE)\
-       default: return "";\
-     }\
-  }\
-  EnumType get_##EnumType##_value( const char* str )\
-  {\
-     ENUM_DEF(ENUM_STRCMP)\
-     return (EnumType)0;\
+#define DEFINE_ENUM_STRINGIFY(EnumType, ENUM_DEF)                                                  \
+  const char *get_##EnumType##_string(EnumType blah) {                                             \
+    switch (blah) {                                                                                \
+      ENUM_DEF(ENUM_CASE)                                                                          \
+    default:                                                                                       \
+      return "";                                                                                   \
+    }                                                                                              \
+  }                                                                                                \
+  EnumType get_##EnumType##_value(const char *str) {                                               \
+    ENUM_DEF(ENUM_STRCMP)                                                                          \
+    return (EnumType)0;                                                                            \
   }
 
 // Other system wide constants and macros
-#define LOG_MAX_LINE_LENGTH             (512)
+#define LOG_MAX_LINE_LENGTH (512)
 
 #ifdef __cplusplus
 };
 #endif
-#endif //CUTILS_TYPES_H
+#endif // CUTILS_TYPES_H

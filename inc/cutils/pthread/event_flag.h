@@ -9,10 +9,10 @@
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -31,16 +31,14 @@
 extern "C" {
 #endif
 
-typedef enum _event_flag_wait_type_e
-{
+typedef enum _event_flag_wait_type_e {
   WAIT_OR,
   WAIT_OR_CLEAR,
   WAIT_AND,
   WAIT_AND_CLEAR
 } event_flag_wait_type_e;
 
-typedef struct _event_flag_t
-{
+typedef struct _event_flag_t {
   pthread_cond_t cv;
   pthread_mutex_t mtx;
   uint32_t val;
@@ -50,8 +48,11 @@ bool event_flag_new(event_flag_t *p_flags);
 
 bool event_flag_free(event_flag_t *p_flags);
 
-bool event_flag_wait(event_flag_t *p_flags, uint32_t required_flags, event_flag_wait_type_e wait_type,
-                     uint32_t *p_actual_flags, uint32_t wait_ms);
+bool event_flag_wait(event_flag_t *p_flags,
+                     uint32_t required_flags,
+                     event_flag_wait_type_e wait_type,
+                     uint32_t *p_actual_flags,
+                     uint32_t wait_ms);
 
 bool event_flag_send(event_flag_t *p_flags, uint32_t flag_bits);
 

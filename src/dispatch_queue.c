@@ -24,14 +24,13 @@
 
 #include <cutils/dispatch_queue.h>
 
-static void dispatch_queue_worker(void *ctx)
-{
-  dispatch_queue_t *p_queue = (dispatch_queue_t *) ctx;
+static void dispatch_queue_worker(void *ctx) {
+  dispatch_queue_t *p_queue = (dispatch_queue_t *)ctx;
   while (1) {
     dispatch_queue_post_data_t *p_data = 0;
-    CUTILS_ASSERT(ts_queue_dequeue(p_queue->queue, (void **) &p_data, WAIT_FOREVER));
-    if ((void *) p_data == (void *) p_queue) {
-      //Kill Request
+    CUTILS_ASSERT(ts_queue_dequeue(p_queue->queue, (void **)&p_data, WAIT_FOREVER));
+    if ((void *)p_data == (void *)p_queue) {
+      // Kill Request
       break;
     } else {
       p_data->fn(p_data->arg1, p_data->arg2);
@@ -41,13 +40,12 @@ static void dispatch_queue_worker(void *ctx)
   signal_send(&p_queue->signal);
 }
 
-dispatch_queue_t *dispatch_queue_create(dispatch_queue_create_params_t *params)
-{
+dispatch_queue_t *dispatch_queue_create(dispatch_queue_create_params_t *params) {
   dispatch_queue_t *retval = 0;
 
   CUTILS_ASSERTF(params, "Provide valid Create Params");
   CUTILS_ASSERTF(params->queue_params.size, "Require a non-zero queue size");
-  CUTILS_ASSERTF(params->p_queue,"Control block not provided");
+  CUTILS_ASSERTF(params->p_queue, "Control block not provided");
 
   memset(params->p_queue, 0, sizeof(dispatch_queue_t));
 
@@ -72,15 +70,15 @@ dispatch_queue_t *dispatch_queue_create(dispatch_queue_create_params_t *params)
   return retval;
 }
 
-void dispatch_queue_destroy(dispatch_queue_t *p_queue)
-{
+void dispatch_queue_destroy(dispatch_queue_t *p_queue) {
   if (p_queue && !atomic_flag_test_and_set(&p_queue->destroying)) {
-    //We use a pointer value that is unacceptable to indicate that we want to kill the thread.
-    //The thread worker function will check items popped off the queue and if this pointer value is encountered
-    //It will exit the thread
-    dispatch_queue_post_data_t *p_data = (dispatch_queue_post_data_t *) p_queue;
-    CUTILS_ASSERTF(ts_queue_enqueue(p_queue->queue, p_data, NO_SLEEP), "Unable to queue Kill request");
-    //Wait for thread to exit
+    // We use a pointer value that is unacceptable to indicate that we want to kill the thread.
+    // The thread worker function will check items popped off the queue and if this pointer value is
+    // encountered It will exit the thread
+    dispatch_queue_post_data_t *p_data = (dispatch_queue_post_data_t *)p_queue;
+    CUTILS_ASSERTF(ts_queue_enqueue(p_queue->queue, p_data, NO_SLEEP),
+                   "Unable to queue Kill request");
+    // Wait for thread to exit
     if (signal_wait(&p_queue->signal)) {
       task_destroy_static(p_queue->p_task);
       p_queue->p_task = 0;
