@@ -21,8 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
- #pragma once
-
+#pragma once
 
 #ifdef __cplusplus
 #include <atomic>
@@ -38,14 +37,15 @@ extern "C" {
 #endif
 
 /**
- * @brief These macros are used in api's that block and have a parameter to specify the block duration.
+ * @brief These macros are used in api's that block and have a parameter to specify the block
+ * duration.
  */
-#define WAIT_FOREVER          ((uint32_t)-1)
-#define NO_SLEEP              (0)
+#define WAIT_FOREVER ((uint32_t)-1)
+#define NO_SLEEP (0)
 
 /**
- * @brief Prototype for callbacks used by dispatch apis. Allows to pass two context arguments whose durations should
- * be alive for the duration of the dispatch API being used.
+ * @brief Prototype for callbacks used by dispatch apis. Allows to pass two context arguments whose
+ * durations should be alive for the duration of the dispatch API being used.
  */
 typedef void (*dispatch_function_t)(void *arg1, void *arg2);
 

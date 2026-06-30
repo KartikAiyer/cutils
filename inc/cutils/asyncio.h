@@ -41,11 +41,11 @@ typedef void *asyncio_handle_t;
 typedef uint8_t *asyncio_message_t;
 typedef void *asyncio_tx_token_t;
 
-#define STREAM_TX_SEND_STATUS(ACTION)\
-  ACTION(StreamTxSendSuccess,)\
-  ACTION(StreamTxSendHeaderFail,)\
-  ACTION(StreamTxSendMessageFail,)\
-  ACTION(StreamTxInterfaceInError,)
+#define STREAM_TX_SEND_STATUS(ACTION)                                                              \
+  ACTION(StreamTxSendSuccess, )                                                                    \
+  ACTION(StreamTxSendHeaderFail, )                                                                 \
+  ACTION(StreamTxSendMessageFail, )                                                                \
+  ACTION(StreamTxInterfaceInError, )
 
 DECLARE_ENUM(asyncio_tx_send_status_e, STREAM_TX_SEND_STATUS)
 
@@ -60,7 +60,9 @@ DECLARE_ENUM(asyncio_tx_send_status_e, STREAM_TX_SEND_STATUS)
  * @param pPrivate - Private data provided at time of
  *                 registration.
  */
-typedef void (*asyncio_rx_callback_f)(asyncio_handle_t h_asyncio, asyncio_message_t pMessage, size_t size);
+typedef void (*asyncio_rx_callback_f)(asyncio_handle_t h_asyncio,
+                                      asyncio_message_t pMessage,
+                                      size_t size);
 
 /**
  * asyncio_tx_notification_f - Called when a set number of bytes has
@@ -105,25 +107,23 @@ typedef size_t (*asyncio_interface_client_read_f)(asyncio_handle_t handle,
  * @return size_t - Number of bytes written
  */
 
-typedef size_t(*asyncio_interface_client_write_f)(asyncio_handle_t handle,
-                                                  size_t tx_data_size,
-                                                  uint8_t *p_tx_data_buf,
-                                                  uint32_t timeout);
+typedef size_t (*asyncio_interface_client_write_f)(asyncio_handle_t handle,
+                                                   size_t tx_data_size,
+                                                   uint8_t *p_tx_data_buf,
+                                                   uint32_t timeout);
 
-#define ASYNCIO_MAX_THREAD_NAME              ( 40 )
-#define ASYNCIO_SERVICE_UNUSED               (0)
+#define ASYNCIO_MAX_THREAD_NAME (40)
+#define ASYNCIO_SERVICE_UNUSED (0)
 
-
-#define ASYNCIO_INIT_STATE_E(XX)\
-  XX(AsyncioUninitialized,)\
-  XX(AsyncioUninitializing,)\
-  XX(AsyncioInitializing, )\
+#define ASYNCIO_INIT_STATE_E(XX)                                                                   \
+  XX(AsyncioUninitialized, )                                                                       \
+  XX(AsyncioUninitializing, )                                                                      \
+  XX(AsyncioInitializing, )                                                                        \
   XX(AsyncioInitialized, )
 
 DECLARE_ENUM(asyncio_init_state_e, ASYNCIO_INIT_STATE_E)
 
-typedef struct _asyncio_rx_thread_context
-{
+typedef struct _asyncio_rx_thread_context {
   dispatch_queue_t *worker;
   pool_create_params_t rx_pool_params;
   pool_t *buffer_pool;
@@ -133,16 +133,14 @@ typedef struct _asyncio_rx_thread_context
   atomic_int init_state;
 } asyncio_rx_thread_context_t;
 
-typedef struct _asyncio_tx_request
-{
+typedef struct _asyncio_tx_request {
   uint32_t size;
   uint32_t buffer_offset;
   asyncio_tx_notification_f fn;
   void *p_private;
 } asyncio_tx_request_t;
 
-typedef struct _asyncio_tx_thread_context_t
-{
+typedef struct _asyncio_tx_thread_context_t {
   dispatch_queue_t *worker;
   pool_create_params_t pool_create_params;
   char thread_name[ASYNCIO_MAX_THREAD_NAME];
@@ -153,8 +151,7 @@ typedef struct _asyncio_tx_thread_context_t
   atomic_int init_state;
 } asyncio_tx_thread_context_t;
 
-typedef struct _asyncio_interface_instance_t
-{
+typedef struct _asyncio_interface_instance_t {
   asyncio_rx_thread_context_t rx_task;
   asyncio_tx_thread_context_t tx_task;
   asyncio_interface_client_read_f f_stream_interface_read;
@@ -167,8 +164,7 @@ typedef struct _asyncio_interface_instance_t
   atomic_int init_state;
 } asyncio_interface_instance_t;
 
-typedef struct _asyncio_create_params_t
-{
+typedef struct _asyncio_create_params_t {
   const char *stream_name;
 
   // Client callbacks and parameters
@@ -190,41 +186,50 @@ typedef struct _asyncio_create_params_t
   uint32_t tx_buffer_offset;
 } asyncio_create_params_t;
 
-#define ASYNCIO_STORE(name)       _asyncio_store_##name
-#define ASYNCIO_STORE_T(name)     _asyncio_store_##name##_t
+#define ASYNCIO_STORE(name) _asyncio_store_##name
+#define ASYNCIO_STORE_T(name) _asyncio_store_##name##_t
 
-#define ASYNCIO_STORE_DECL(name, rx_max_buffers, tx_max_buffers, rx_max_buf_size, tx_max_buf_size, buffer_align)\
-typedef struct {\
-  asyncio_tx_request_t request;\
-  uint8_t payload[ (tx_max_buf_size)?tx_max_buf_size:buffer_align ] __attribute__((aligned(buffer_align)));\
-}__asyncio_##name##_tx_message_t;\
-POOL_STORE_DECL( name##_tx, ((tx_max_buffers)?tx_max_buffers:1), sizeof(__asyncio_##name##_tx_message_t), buffer_align);\
-POOL_STORE_DECL( name##_rx, ((rx_max_buffers)?rx_max_buffers:1), (rx_max_buf_size)?rx_max_buf_size:buffer_align, buffer_align );\
-typedef struct {\
-  asyncio_interface_instance_t instance;\
-}ASYNCIO_STORE_T( name );\
-static uint32_t __tx_max_buf_size_##name = (tx_max_buf_size)?tx_max_buf_size:buffer_align;
+#define ASYNCIO_STORE_DECL(                                                                        \
+    name, rx_max_buffers, tx_max_buffers, rx_max_buf_size, tx_max_buf_size, buffer_align)          \
+  typedef struct {                                                                                 \
+    asyncio_tx_request_t request;                                                                  \
+    uint8_t payload[(tx_max_buf_size) ? tx_max_buf_size : buffer_align]                            \
+        __attribute__((aligned(buffer_align)));                                                    \
+  } __asyncio_##name##_tx_message_t;                                                               \
+  POOL_STORE_DECL(name##_tx,                                                                       \
+                  ((tx_max_buffers) ? tx_max_buffers : 1),                                         \
+                  sizeof(__asyncio_##name##_tx_message_t),                                         \
+                  buffer_align);                                                                   \
+  POOL_STORE_DECL(name##_rx,                                                                       \
+                  ((rx_max_buffers) ? rx_max_buffers : 1),                                         \
+                  (rx_max_buf_size) ? rx_max_buf_size : buffer_align,                              \
+                  buffer_align);                                                                   \
+  typedef struct {                                                                                 \
+    asyncio_interface_instance_t instance;                                                         \
+  } ASYNCIO_STORE_T(name);                                                                         \
+  static uint32_t __tx_max_buf_size_##name = (tx_max_buf_size) ? tx_max_buf_size : buffer_align;
 
-#define ASYNCIO_STORE_DEF(name)\
-POOL_STORE_DEF(name##_tx);\
-POOL_STORE_DEF(name##_rx);\
-ASYNCIO_STORE_T( name ) ASYNCIO_STORE( name ) = { 0 }
+#define ASYNCIO_STORE_DEF(name)                                                                    \
+  POOL_STORE_DEF(name##_tx);                                                                       \
+  POOL_STORE_DEF(name##_rx);                                                                       \
+  ASYNCIO_STORE_T(name) ASYNCIO_STORE(name) = {0}
 
-#define ASYNCIO_CREATE_PARAMS_INIT(params, name, st_name, read_fn, write_fn, rx_cb, rx_dq, tx_dq, p_priv) do{\
-  (params).stream_name = st_name;\
-  (params).p_instance = &ASYNCIO_STORE( name ).instance;\
-  (params).read_f = read_fn;\
-  (params).write_f = write_fn;\
-  (params).rx_callback = rx_cb;\
-  (params).client_data = p_priv;\
-  (params).rx_worker = rx_dq,\
-  POOL_CREATE_INIT((params).rx_pool_create_params, name##_rx);\
-  (params).tx_worker = tx_dq;\
-  POOL_CREATE_INIT((params).tx_pool_create_params, name##_tx);\
-  (params).tx_buffer_offset = offsetof(__asyncio_##name##_tx_message_t, payload);\
-  (params).tx_max_chunk_size = __tx_max_buf_size_##name;\
-  (params).tx_write_timeout = 4000;\
-}while( 0 )
+#define ASYNCIO_CREATE_PARAMS_INIT(                                                                \
+    params, name, st_name, read_fn, write_fn, rx_cb, rx_dq, tx_dq, p_priv)                         \
+  do {                                                                                             \
+    (params).stream_name = st_name;                                                                \
+    (params).p_instance = &ASYNCIO_STORE(name).instance;                                           \
+    (params).read_f = read_fn;                                                                     \
+    (params).write_f = write_fn;                                                                   \
+    (params).rx_callback = rx_cb;                                                                  \
+    (params).client_data = p_priv;                                                                 \
+    (params).rx_worker = rx_dq, POOL_CREATE_INIT((params).rx_pool_create_params, name##_rx);       \
+    (params).tx_worker = tx_dq;                                                                    \
+    POOL_CREATE_INIT((params).tx_pool_create_params, name##_tx);                                   \
+    (params).tx_buffer_offset = offsetof(__asyncio_##name##_tx_message_t, payload);                \
+    (params).tx_max_chunk_size = __tx_max_buf_size_##name;                                         \
+    (params).tx_write_timeout = 4000;                                                              \
+  } while (0)
 
 asyncio_handle_t asyncio_create_instance(asyncio_create_params_t *p_params);
 
@@ -242,11 +247,12 @@ uint32_t asyncio_tx_token_get_max_data_size(asyncio_handle_t h_asyncio);
 
 bool asyncio_send_buffer(asyncio_handle_t h_asyncio,
                          asyncio_tx_token_t token,
-                         uint32_t size, asyncio_tx_notification_f fn, void *p_private);
+                         uint32_t size,
+                         asyncio_tx_notification_f fn,
+                         void *p_private);
 
 void asyncio_release_rx_buffer(asyncio_handle_t h_asyncio, asyncio_message_t message);
 
 void asyncio_release_tx_token(asyncio_handle_t h_asyncio, asyncio_tx_token_t token);
 
 void *asyncio_get_private_data(asyncio_handle_t h_asyncio);
-

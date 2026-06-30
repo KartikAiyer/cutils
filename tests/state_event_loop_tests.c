@@ -22,33 +22,26 @@
  * THE SOFTWARE.
  */
 
-#include <embUnit/embUnit.h>
 #include <cutils/state_event_loop.h>
+#include <embUnit/embUnit.h>
 #include <stdlib.h>
 
-#define TEST_MAX_STATES                 ( 20 )
-#define TEST_QUEUE_SIZE                 ( 64 )
-#define TEST_MAX_REGISTRATIONS          ( 64 )
-#define TEST_FLAG_PRIVATE_DATA_VALID    (1U << 0U)
-#define TEST_FLAG_PRIVATE_DATA_INVALID  (1U << 1U)
+#define TEST_MAX_STATES (20)
+#define TEST_QUEUE_SIZE (64)
+#define TEST_MAX_REGISTRATIONS (64)
+#define TEST_FLAG_PRIVATE_DATA_VALID (1U << 0U)
+#define TEST_FLAG_PRIVATE_DATA_INVALID (1U << 1U)
 
-#define  PRINT_FIELD( x, fmt )    CLOG( #x " = %" #fmt, x )
+#define PRINT_FIELD(x, fmt) CLOG(#x " = %" #fmt, x)
 
-typedef enum
-{
-  TRANSITION_EVENT,
-  NO_TRANSITION_EVENT,
-  TEST_MAX_EVENT_ID
-} tests_event_e;
+typedef enum { TRANSITION_EVENT, NO_TRANSITION_EVENT, TEST_MAX_EVENT_ID } tests_event_e;
 
-typedef struct
-{
+typedef struct {
   event_t base;
   uint32_t next_state;
 } test_event_t;
 
-typedef struct
-{
+typedef struct {
   state_t base;
   uint32_t exit_state;
 } test_state_t;
@@ -56,13 +49,11 @@ typedef struct
 /**
  * Define your own callback for notifications
  */
-typedef struct
-{
+typedef struct {
   notifier_block_t base;
 } test_registration_t;
 
-typedef struct
-{
+typedef struct {
   state_t states[TEST_MAX_STATES];
   state_event_loop_create_params_t create_params;
   state_event_loop_t *p_loop;
@@ -83,23 +74,20 @@ STATE_EVENT_LOOP_STORE_DECL(test_evl,
 
 STATE_EVENT_LOOP_STORE_DEF(test_evl);
 
-typedef struct
-{
+typedef struct {
   uint32_t count;
   uint32_t num_of_regs;
 } posted_counts_t;
 
-static void test_notifier_callback(notifier_block_t * block, uint32_t category, void *notif_data)
-{
-  posted_counts_t *count_array = (posted_counts_t *) notif_data;
+static void test_notifier_callback(notifier_block_t *block, uint32_t category, void *notif_data) {
+  posted_counts_t *count_array = (posted_counts_t *)notif_data;
 
   count_array[category].count++;
 }
 
-static void setup(void)
-{
-  char* sm_names[] = { "test_event_loop" };
-  uint32_t start_state[] = { 0 };
+static void setup(void) {
+  char *sm_names[] = {"test_event_loop"};
+  uint32_t start_state[] = {0};
   memset(&s_sel_data, 0, sizeof(s_sel_data));
   STATE_EVENT_LOOP_CREATE_PARAMS_INIT(s_sel_data.create_params,
                                       test_evl,
@@ -112,15 +100,11 @@ static void setup(void)
   event_flag_new(&s_sel_data.flags);
 }
 
-static void teardown(void)
-{
-  event_flag_free(&s_sel_data.flags);
-}
+static void teardown(void) { event_flag_free(&s_sel_data.flags); }
 
-static void test_state_init(state_machine_t * sm, state_t * state)
-{
-  test_state_t *test_state = (test_state_t *) state;
-  sel_test_data_t *p_loop = (sel_test_data_t *) state_machine_get_private_data(sm);
+static void test_state_init(state_machine_t *sm, state_t *state) {
+  test_state_t *test_state = (test_state_t *)state;
+  sel_test_data_t *p_loop = (sel_test_data_t *)state_machine_get_private_data(sm);
   if (p_loop == &s_sel_data) {
     event_flag_send(&s_sel_data.flags, TEST_FLAG_PRIVATE_DATA_VALID);
   } else {
@@ -130,17 +114,12 @@ static void test_state_init(state_machine_t * sm, state_t * state)
   p_loop->init_count++;
 }
 
-static void test_state_enter(state_machine_t * sm, state_t * state)
-{
-}
+static void test_state_enter(state_machine_t *sm, state_t *state) {}
 
-static void test_state_exit(state_machine_t * sm, state_t * state)
-{
-}
+static void test_state_exit(state_machine_t *sm, state_t *state) {}
 
-static bool test_state_valid_event(state_machine_t * sm, state_t * state, void *evt)
-{
-  test_event_t *event = (test_event_t *) evt;
+static bool test_state_valid_event(state_machine_t *sm, state_t *state, void *evt) {
+  test_event_t *event = (test_event_t *)evt;
 
   if (event->base.event_id < TEST_MAX_EVENT_ID)
     return true;
@@ -148,11 +127,10 @@ static bool test_state_valid_event(state_machine_t * sm, state_t * state, void *
     return false;
 }
 
-static uint32_t test_state_handle_event(state_machine_t * sm, state_t * state, void *evt)
-{
+static uint32_t test_state_handle_event(state_machine_t *sm, state_t *state, void *evt) {
   uint32_t next_state = state->stateId;
-  test_state_t *test_state = (test_state_t *) state;
-  test_event_t *event = (test_event_t *) evt;
+  test_state_t *test_state = (test_state_t *)state;
+  test_event_t *event = (test_event_t *)evt;
 
   switch (event->base.event_id) {
   case TRANSITION_EVENT:
@@ -166,13 +144,13 @@ static uint32_t test_state_handle_event(state_machine_t * sm, state_t * state, v
   return next_state;
 }
 
-static void can_post_to_state_machine(void)
-{
+static void can_post_to_state_machine(void) {
   uint32_t total_posts = 80;
 
   if (s_sel_data.create_params.event_data_size != sizeof(test_event_t)) {
     CLOG("Event Data size no match: event_data_size = %u, sizeof(test_event_t) = %u",
-         s_sel_data.create_params.event_data_size, sizeof(test_event_t));
+         s_sel_data.create_params.event_data_size,
+         sizeof(test_event_t));
     PRINT_FIELD(s_sel_data.create_params.event_data_size, u);
     PRINT_FIELD(s_sel_data.create_params.queue_params.queue_params.size, u);
     PRINT_FIELD(s_sel_data.create_params.queue_params.task_params.stack_size, u);
@@ -182,7 +160,7 @@ static void can_post_to_state_machine(void)
   s_sel_data.p_loop = state_event_loop_init(&s_sel_data.create_params);
   TEST_ASSERT(s_sel_data.p_loop);
   for (uint32_t i = 0; i < TEST_MAX_STATES; i++) {
-    state_t *state = (state_t *) & s_sel_data.states[i];
+    state_t *state = (state_t *)&s_sel_data.states[i];
 
     state->stateId = i;
     state->state_name = "Test State";
@@ -197,7 +175,7 @@ static void can_post_to_state_machine(void)
   TEST_ASSERT_EQUAL_INT(1, s_sel_data.init_count);
   uint32_t transition_count = 1;
   for (uint32_t i = 0; i < total_posts; i++) {
-    test_event_t event = {.base.event_id = (uint32_t) rand() % TEST_MAX_EVENT_ID };
+    test_event_t event = {.base.event_id = (uint32_t)rand() % TEST_MAX_EVENT_ID};
     uint32_t last_state_id = state_event_loop_get_current_state_id(s_sel_data.p_loop, 0);
 
     state_event_loop_post(s_sel_data.p_loop, event.base.event_id, &event.base);
@@ -207,7 +185,7 @@ static void can_post_to_state_machine(void)
     if (event.base.event_id == TRANSITION_EVENT) {
       uint32_t expected_new_state = (last_state_id + 1) % TEST_MAX_STATES;
       transition_count++;
-      if(transition_count <= TEST_MAX_STATES) {
+      if (transition_count <= TEST_MAX_STATES) {
         TEST_ASSERT_EQUAL_INT(transition_count, s_sel_data.init_count);
       } else {
         TEST_ASSERT_EQUAL_INT(TEST_MAX_STATES, s_sel_data.init_count);
@@ -230,17 +208,14 @@ static void can_post_to_state_machine(void)
   TEST_ASSERT_EQUAL_INT(TEST_MAX_STATES, s_sel_data.init_count);
 }
 
-TestRef state_event_loop_get_tests(void)
-{
-  EMB_UNIT_TESTFIXTURES(fixtures) {
-    new_TestFixture("Should post to state machine", can_post_to_state_machine)
-  };
+TestRef state_event_loop_get_tests(void) {
+  EMB_UNIT_TESTFIXTURES(fixtures){
+      new_TestFixture("Should post to state machine", can_post_to_state_machine)};
   EMB_UNIT_TESTCALLER(sel_tests, "State event loop tests", setup, teardown, fixtures);
-  return (TestRef) & sel_tests;
+  return (TestRef)&sel_tests;
 }
 
-int main()
-{
+int main() {
   TestRunner_start();
   {
     TestRunner_runTest(state_event_loop_get_tests());

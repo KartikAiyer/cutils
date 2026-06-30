@@ -24,13 +24,12 @@
 
 #include <cutils/notifier.h>
 
+#define NOTIF_CLOG(str, ...)                                                                       \
+  console_log(&notifier->log.base, NULL, "%s(%u): " str, __FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define CLOGV(str, ...) CLOG_IF(notifier->log.base.log_level > 0, str, ##__VA_ARGS__)
+#define CLOGV_FIELD(x, f) LOG_FIELD(x, f, CLOGV)
 
-#define NOTIF_CLOG(str, ...)        console_log(&notifier->log.base, NULL, "%s(%u): " str, __FUNCTION__, __LINE__, ##__VA_ARGS__)
-#define CLOGV(str, ...)       CLOG_IF(notifier->log.base.log_level > 0, str, ##__VA_ARGS__)
-#define CLOGV_FIELD(x, f)     LOG_FIELD(x,f,CLOGV)
-
-bool notifier_init(notifier_create_params_t *params)
-{
+bool notifier_init(notifier_create_params_t *params) {
   bool retval = false;
 
   CUTILS_ASSERTF(params && params->notifier && params->notif_array, "Bad Inputs")
@@ -67,16 +66,14 @@ bool notifier_init(notifier_create_params_t *params)
   return retval;
 }
 
-void notifier_deinit(notifier_t *notifier)
-{
+void notifier_deinit(notifier_t *notifier) {
   CUTILS_ASSERT(notifier);
   pool_destroy(notifier->p_pool);
   notifier->p_pool = 0;
   mutex_free(&notifier->mtx);
 }
 
-notifier_block_t *notifier_allocate_notification_block(notifier_t *notifier)
-{
+notifier_block_t *notifier_allocate_notification_block(notifier_t *notifier) {
   notifier_block_t *retval = 0;
 
   CUTILS_ASSERT(notifier);
@@ -88,8 +85,9 @@ notifier_block_t *notifier_allocate_notification_block(notifier_t *notifier)
   return retval;
 }
 
-bool notifier_register_notification_block(notifier_t *notifier, uint32_t category, notifier_block_t *block)
-{
+bool notifier_register_notification_block(notifier_t *notifier,
+                                          uint32_t category,
+                                          notifier_block_t *block) {
   CUTILS_ASSERT(notifier && block && category < notifier->total_notification_categories);
   mutex_lock(&notifier->mtx, WAIT_FOREVER);
   block->category = category;
@@ -98,11 +96,10 @@ bool notifier_register_notification_block(notifier_t *notifier, uint32_t categor
   return true;
 }
 
-void notifier_deregister_notification_block(notifier_t *notifier, notifier_block_t *block)
-{
+void notifier_deregister_notification_block(notifier_t *notifier, notifier_block_t *block) {
   CUTILS_ASSERT(notifier && block && block->category < notifier->total_notification_categories)
   mutex_lock(&notifier->mtx, WAIT_FOREVER);
-  if (notifier->notif_array[block->category] == (KListHead *) block) {
+  if (notifier->notif_array[block->category] == (KListHead *)block) {
     notifier_block_t *pPopped;
 
     KLIST_HEAD_POP(notifier->notif_array[block->category], pPopped);
@@ -114,12 +111,11 @@ void notifier_deregister_notification_block(notifier_t *notifier, notifier_block
   mutex_unlock(&notifier->mtx);
 }
 
-static void Poster(KListElem *elem, ...)
-{
+static void Poster(KListElem *elem, ...) {
   va_list args;
   notifier_t *notifier = 0;
   void *pNotificationData = 0;
-  notifier_block_t *pBlock = (notifier_block_t *) elem;
+  notifier_block_t *pBlock = (notifier_block_t *)elem;
 
   va_start(args, elem);
   notifier = va_arg(args, notifier_t *);
@@ -132,10 +128,12 @@ static void Poster(KListElem *elem, ...)
   va_end(args);
 }
 
-void notifier_post_notification(notifier_t *notifier, uint32_t category, void *notification_data)
-{
-  CUTILS_ASSERTF(notifier && category < notifier->total_notification_categories, "Notifier: %p, category: %d, tot: %d",
-      notifier, category, notifier->total_notification_categories );
+void notifier_post_notification(notifier_t *notifier, uint32_t category, void *notification_data) {
+  CUTILS_ASSERTF(notifier && category < notifier->total_notification_categories,
+                 "Notifier: %p, category: %d, tot: %d",
+                 notifier,
+                 category,
+                 notifier->total_notification_categories);
   mutex_lock(&notifier->mtx, WAIT_FOREVER);
   KLIST_HEAD_FOREACH(notifier->notif_array[category], Poster, notifier, notification_data);
   mutex_unlock(&notifier->mtx);

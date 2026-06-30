@@ -26,29 +26,17 @@
 
 #include <cutils/event_flag.h>
 
-
 typedef event_flag_t signal_t;
 
-static inline bool signal_new(signal_t *p_signal)
-{
-  return event_flag_new(p_signal);
-}
+static inline bool signal_new(signal_t *p_signal) { return event_flag_new(p_signal); }
 
-static inline bool signal_free(signal_t *p_signal)
-{
-  return event_flag_free(p_signal);
-}
+static inline bool signal_free(signal_t *p_signal) { return event_flag_free(p_signal); }
 
-static inline bool signal_wait(signal_t *p_signal)
-{
+static inline bool signal_wait(signal_t *p_signal) {
   return event_flag_wait(p_signal, 1, WAIT_OR_CLEAR, NULL, WAIT_FOREVER);
 }
 
-static inline bool signal_wait_timed(signal_t *p_signal, uint32_t timeout)
-{
+static inline bool signal_wait_timed(signal_t *p_signal, uint32_t timeout) {
   return event_flag_wait(p_signal, 1, WAIT_OR_CLEAR, NULL, timeout);
 }
-static inline bool signal_send(signal_t *p_signal)
-{
-  return event_flag_send(p_signal, 1);
-}
+static inline bool signal_send(signal_t *p_signal) { return event_flag_send(p_signal, 1); }

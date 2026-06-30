@@ -9,10 +9,10 @@
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -31,13 +31,11 @@
 extern "C" {
 #endif
 
-typedef struct _mutex_t
-{
+typedef struct _mutex_t {
   pthread_mutex_t mtx;
 } mutex_t;
 
-static inline bool mutex_new(mutex_t *mutex)
-{
+static inline bool mutex_new(mutex_t *mutex) {
   bool res = false;
   pthread_mutexattr_t attr;
 
@@ -45,7 +43,7 @@ static inline bool mutex_new(mutex_t *mutex)
 
   pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_TIMED_NP);
 
-  if(0) {
+  if (0) {
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
   }
 
@@ -54,32 +52,29 @@ static inline bool mutex_new(mutex_t *mutex)
   return res;
 }
 
-static inline void mutex_free(mutex_t *mutex)
-{
+static inline void mutex_free(mutex_t *mutex) {
   if (mutex) {
     pthread_mutex_destroy(&mutex->mtx);
   }
 }
 
-static inline bool mutex_lock(mutex_t *mutex, uint32_t wait_ms)
-{
+static inline bool mutex_lock(mutex_t *mutex, uint32_t wait_ms) {
   bool retval = false;
   if (mutex) {
-    if(!wait_ms) {
+    if (!wait_ms) {
       retval = !pthread_mutex_trylock(&mutex->mtx);
     } else {
       struct timespec tm = {0};
       clock_gettime(CLOCK_REALTIME, &tm);
-      tm.tv_sec += wait_ms/1000;
-      tm.tv_nsec += 1000000 * ( wait_ms % 1000);
+      tm.tv_sec += wait_ms / 1000;
+      tm.tv_nsec += 1000000 * (wait_ms % 1000);
       retval = (!pthread_mutex_timedlock(&mutex->mtx, &tm));
     }
   }
   return retval;
 }
 
-static inline bool mutex_unlock(mutex_t *mutex)
-{
+static inline bool mutex_unlock(mutex_t *mutex) {
   bool retval = false;
   if (mutex) {
     retval = (!pthread_mutex_unlock(&mutex->mtx));

@@ -1,0 +1,29 @@
+---
+# cutils C/C++ formatting (issue #6).
+# Enforced via `clang-format -i` and by editors (LazyVim/conform.nvim runs
+# clang-format on save for c/cpp filetypes).
+BasedOnStyle: LLVM
+Language: Cpp
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+ColumnLimit: 100
+
+# `if (x)` -- space after the control keyword, but NO space inside parens.
+# Function calls/declarations keep no space before the paren: `set(...)`.
+SpaceBeforeParens: ControlStatements
+SpacesInParens: Never
+
+# Opening brace on the same line for everything (functions + control blocks).
+BreakBeforeBraces: Attach
+
+# When a declaration/call wraps: one parameter per line, aligned to the first.
+AlignAfterOpenBracket: true            # true == Align
+BinPackParameters: OnePerLine
+BinPackArguments: false
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowAllArgumentsOnNextLine: true
+
+# Pointer asterisk on the right of the type: `state_t *p`, `void *ctx`.
+PointerAlignment: Right
+DerivePointerAlignment: false

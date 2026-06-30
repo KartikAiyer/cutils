@@ -25,9 +25,7 @@
 #include <cutils/bst.h>
 #include <cutils/logger.h>
 
-
-void bst_insert(bst_t *bst, KListElem *elem)
-{
+void bst_insert(bst_t *bst, KListElem *elem) {
   CUTILS_ASSERTF(bst, "Invalid BST");
   elem->prev = elem->next = 0;
   if (!bst->root) {
@@ -51,8 +49,7 @@ void bst_insert(bst_t *bst, KListElem *elem)
   }
 }
 
-KListElem *bst_search_inner(KListElem *root, KListElem *key, bst_less_f less)
-{
+KListElem *bst_search_inner(KListElem *root, KListElem *key, bst_less_f less) {
   if (!root || !less(key, root)) {
     return root;
   } else if (less(key, root) < 0) {
@@ -62,14 +59,12 @@ KListElem *bst_search_inner(KListElem *root, KListElem *key, bst_less_f less)
   }
 }
 
-KListElem *bst_search(bst_t *bst, KListElem *key)
-{
+KListElem *bst_search(bst_t *bst, KListElem *key) {
   CUTILS_ASSERTF(bst, "Invalid BST");
   return bst_search_inner(bst->root, key, bst->f_less);
 }
 
-static void bst_traverse_inner(KListElem *root, bst_traverse_f fn, va_list args)
-{
+static void bst_traverse_inner(KListElem *root, bst_traverse_f fn, va_list args) {
   if (root) {
     bst_traverse_inner(root->prev, fn, args);
     fn(root, args);
@@ -77,8 +72,7 @@ static void bst_traverse_inner(KListElem *root, bst_traverse_f fn, va_list args)
   }
 }
 
-void bst_traverse(bst_t *bst, bst_traverse_f fn, ...)
-{
+void bst_traverse(bst_t *bst, bst_traverse_f fn, ...) {
   va_list args;
   va_start(args, fn);
   bst_traverse_inner(bst->root, fn, args);
