@@ -2,8 +2,11 @@ cmake_minimum_required( VERSION 3.14 )
 project( cutils VERSION 0.0.1 LANGUAGES C )
 
 find_package(Git QUIET)
-if(GIT_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
-  # Update submodules as needed
+if(GIT_FOUND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git" AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.gitmodules")
+  # Update submodules as needed (only when this branch actually declares any).
+  # master has no submodules after the googletest -> FetchContent migration
+  # (issue #4); other branches that still carry extern/FreeRTOS-Kernel keep a
+  # .gitmodules and this step runs for them.
   option(GIT_SUBMODULE "Check submodules during build" ON)
   if(GIT_SUBMODULE)
     message(STATUS "Submodule update")
