@@ -1,7 +1,16 @@
 enable_language(CXX C)
 
+include(FetchContent)
+FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG        v1.17.0
+)
+# Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
 include(TestUtil)
-add_subdirectory("${PROJECT_SOURCE_DIR}/extern/googletest" "extern/googletest")
 add_subdirectory("${PROJECT_SOURCE_DIR}/extern/embunit" "extern/embunit")
 
 set(LIBRARY_INCLUDE_DIR "${API_INCLUDES}")
