@@ -1,0 +1,23 @@
+# cutils CMake lint config (issue #6).
+# cmakelint (the standalone linter) reads this file from the repo root.
+# It is separate from .cmake-format.yaml (the formatter config) -- the two
+# tools do not share config, so they are kept in sync manually here.
+
+# Line length: the formatter (.cmake-format.yaml) targets 100 cols, but a few
+# legitimate long lines exist (e.g. unbreakable string literals that were
+# split into adjacent CMake string segments to stay under ~110). 120 gives
+# headroom without being permissive. cmakelint's default is 80.
+linelength=120
+
+# Disable the whitespace/indent check. cmake-format is the authority on
+# indentation; cmakelint's indent check expects multiples of 2 spaces and
+# conflicts with cmake-format's continuation-line alignment (e.g. args
+# aligned to the first argument of a wrapped command). Letting cmake-format
+# own indentation avoids the spurious "Weird indentation; use 2 spaces"
+# diagnostics on legitimately-formatted continuation lines.
+#
+# Also disable readability/wonkycase (mixed-case command names). CMake's own
+# module-provided commands are genuinely mixed-case by upstream design --
+# e.g. FetchContent_Declare, FetchContent_MakeAvailable -- and flagging them
+# is a false positive we cannot fix without abandoning FetchContent.
+filter=-whitespace/indent,-readability/wonkycase
