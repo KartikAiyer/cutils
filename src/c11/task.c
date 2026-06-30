@@ -22,68 +22,59 @@
  * THE SOFTWARE.
  */
 
-#include <cutils/task.h>
 #include <cutils/logger.h>
+#include <cutils/task.h>
 #include <string.h>
 
-static int thread_runner_f(void* ctx)
-{
-  task_t* p_task = (task_t*)ctx;
+static int thread_runner_f(void *ctx) {
+  task_t *p_task = (task_t *)ctx;
   p_task->func(p_task->ctx);
   return 0;
 }
 
-task_t *task_new_static(task_create_params_t *create_params)
-{
+task_t *task_new_static(task_create_params_t *create_params) {
   task_t *retval = 0;
 
-  if (create_params &&
-      create_params->task &&
-      create_params->func  && create_params->stack && create_params->stack_size) {
+  if (create_params && create_params->task && create_params->func && create_params->stack &&
+      create_params->stack_size) {
     memset(create_params->task, 0, sizeof(task_t));
     create_params->task->func = create_params->func;
     create_params->task->ctx = create_params->ctx;
     int r = thrd_create_ex(&create_params->task->task,
-                            thread_runner_f,
-                            create_params->task,
-                            create_params->label,
-                            create_params->priority,
-                            create_params->stack,
-                            create_params->stack_size);
+                           thread_runner_f,
+                           create_params->task,
+                           create_params->label,
+                           create_params->priority,
+                           create_params->stack,
+                           create_params->stack_size);
 
-    strncpy(create_params->task->label, create_params->label, sizeof(create_params->task->label) -1);
-    //TODO: Add an assertion
+    strncpy(
+        create_params->task->label, create_params->label, sizeof(create_params->task->label) - 1);
+    // TODO: Add an assertion
     retval = (r == 0) ? create_params->task : 0;
   }
   return retval;
 }
 
-void task_destroy_static(task_t *task)
-{
-  if(task) {
+void task_destroy_static(task_t *task) {
+  if (task) {
     int res = 0;
     thrd_join(task->task, &res);
   }
 }
-bool task_start(task_t *task)
-{
-  return true;
-}
+bool task_start(task_t *task) { return true; }
 
-uint64_t task_get_ticks(void)
-{
+uint64_t task_get_ticks(void) {
   struct timespec res = {0};
   clock_gettime(CLOCK_REALTIME, &res);
   return res.tv_sec * 1000000000 + res.tv_nsec;
 }
 
-void task_sleep(uint32_t ms)
-{
-  struct timespec duration = {.tv_sec = ms/1000, .tv_nsec = ( ms % 1000 ) * 1000000};
+void task_sleep(uint32_t ms) {
+  struct timespec duration = {.tv_sec = ms / 1000, .tv_nsec = (ms % 1000) * 1000000};
   thrd_sleep(&duration, 0);
 }
 
-void task_get_current_name(char* name, size_t string_len)
-{
+void task_get_current_name(char *name, size_t string_len) {
   pthread_getname_np(thrd_current(), name, string_len);
 }

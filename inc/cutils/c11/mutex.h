@@ -23,55 +23,48 @@
  */
 #pragma once
 
-#include <cutils/os_types.h>
 #include <cutils/c11/c11threads.h>
+#include <cutils/os_types.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-
-typedef struct _mutex_t
-{
+typedef struct _mutex_t {
   mtx_t mtx;
 } mutex_t;
 
-static inline bool mutex_new(mutex_t *mutex)
-{
+static inline bool mutex_new(mutex_t *mutex) {
   bool retval = false;
-  if (mutex &&
-      !mtx_init(&mutex->mtx, mtx_timed)) {
+  if (mutex && !mtx_init(&mutex->mtx, mtx_timed)) {
     retval = true;
   }
   return retval;
 }
 
-static inline void mutex_free(mutex_t *mutex)
-{
+static inline void mutex_free(mutex_t *mutex) {
   if (mutex) {
     mtx_destroy(&mutex->mtx);
   }
 }
 
-static inline bool mutex_lock(mutex_t *mutex, uint32_t wait_ms)
-{
+static inline bool mutex_lock(mutex_t *mutex, uint32_t wait_ms) {
   bool retval = false;
   if (mutex) {
-    if(!wait_ms) {
+    if (!wait_ms) {
       retval = !mtx_trylock(&mutex->mtx);
     } else {
       struct timespec tm = {0};
       clock_gettime(CLOCK_REALTIME, &tm);
-      tm.tv_sec += wait_ms/1000;
-      tm.tv_nsec += 1000000 * ( wait_ms % 1000);
+      tm.tv_sec += wait_ms / 1000;
+      tm.tv_nsec += 1000000 * (wait_ms % 1000);
       retval = (!mtx_timedlock(&mutex->mtx, &tm));
     }
   }
   return retval;
 }
 
-static inline bool mutex_unlock(mutex_t *mutex)
-{
+static inline bool mutex_unlock(mutex_t *mutex) {
   bool retval = false;
   if (mutex) {
     retval = (!mtx_unlock(&mutex->mtx));

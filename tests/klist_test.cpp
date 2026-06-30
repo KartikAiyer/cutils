@@ -22,8 +22,8 @@
  * THE SOFTWARE.
  */
 
-#include <gtest/gtest.h>
 #include <cutils/klist.h>
+#include <gtest/gtest.h>
 
 namespace tests {
 class KlistTest : public ::testing::Test {
@@ -43,24 +43,24 @@ TEST_F(KlistTest, MustInsert) {
   TestObj bufs[10];
   memset(bufs, 0, sizeof(bufs));
   KListHead *p_head = nullptr;
-  for(uint32_t i = 0 ; i < sizeof(bufs)/sizeof(bufs[0]); i++) {
+  for (uint32_t i = 0; i < sizeof(bufs) / sizeof(bufs[0]); i++) {
     bufs[i].val = 10 + i;
     KLIST_HEAD_PREPEND(p_head, &bufs[i].elem);
   }
 
-  auto count_up_f = [](KListElem* elem, ...) -> void {
+  auto count_up_f = [](KListElem *elem, ...) -> void {
     va_list args;
     va_start(args, elem);
-    uint32_t *p_count = va_arg(args, uint32_t*);
+    uint32_t *p_count = va_arg(args, uint32_t *);
     (*p_count)++;
     va_end(args);
   };
   uint32_t num_of_elements = 0;
   KLIST_HEAD_FOREACH(p_head, count_up_f, &num_of_elements);
-  ASSERT_EQ(sizeof(bufs)/sizeof(bufs[0]), num_of_elements );
+  ASSERT_EQ(sizeof(bufs) / sizeof(bufs[0]), num_of_elements);
 
   uint32_t i = 1;
-  while(p_head) {
+  while (p_head) {
     TestObj *elem = 0;
     KLIST_HEAD_POP(p_head, elem);
     ASSERT_EQ(10 + (num_of_elements - i), elem->val);
@@ -68,4 +68,4 @@ TEST_F(KlistTest, MustInsert) {
   }
 }
 
-}
+} // namespace tests

@@ -22,26 +22,23 @@
  * THE SOFTWARE.
  */
 
-#include <embUnit/embUnit.h>
 #include <cutils/accumulator.h>
+#include <embUnit/embUnit.h>
 
 ACCUMULATOR_STORE_DECL(test, 6);
 ACCUMULATOR_STORE_DEF(test);
 static accumulator_h s_test_handle;
 
-static void setup(void)
-{
+static void setup(void) {
   accumulator_create_params_t params = {0};
   ACCUMULATOR_CREATE_PARAMS_INIT(params, test);
 
   s_test_handle = accumulator_create(&params);
 }
 
-static void teardown(void)
-{}
+static void teardown(void) {}
 
-static void check_acc_api(void)
-{
+static void check_acc_api(void) {
   accumulator_h handle = s_test_handle;
   TEST_ASSERT(handle);
   uint8_t test_bufA[] = {1, 2};
@@ -63,8 +60,7 @@ static void check_acc_api(void)
   TEST_ASSERT(accumulator_bytes_contained(handle) == 0);
 }
 
-static void check_wrap_around(void)
-{
+static void check_wrap_around(void) {
   accumulator_h handle = s_test_handle;
 
   TEST_ASSERT(handle);
@@ -78,7 +74,7 @@ static void check_wrap_around(void)
   TEST_ASSERT(!memcmp(read_buf, test_bufA, sizeof(test_bufA)));
   memset(read_buf, 0, sizeof(read_buf));
 
-  //Add a 6
+  // Add a 6
   uint8_t add_one = 6;
   TEST_ASSERT(accumulator_insert(handle, &add_one, sizeof(add_one)));
   TEST_ASSERT(accumulator_peek(handle, read_buf, sizeof(read_buf)));
@@ -88,11 +84,11 @@ static void check_wrap_around(void)
   uint8_t add_two[] = {7, 8};
   TEST_ASSERT(accumulator_insert(handle, add_two, sizeof(add_two)));
   TEST_ASSERT(accumulator_peek(handle, read_buf, sizeof(read_buf)));
-  TEST_ASSERT(read_buf[0] == 4 && read_buf[1] == 5 && read_buf[2] == 6 && read_buf[3] == 7 && read_buf[4] == 8);
+  TEST_ASSERT(read_buf[0] == 4 && read_buf[1] == 5 && read_buf[2] == 6 && read_buf[3] == 7 &&
+              read_buf[4] == 8);
 }
 
-static void check_iterator(void)
-{
+static void check_iterator(void) {
   accumulator_h handle = s_test_handle;
 
   TEST_ASSERT(handle);
@@ -110,8 +106,7 @@ static void check_iterator(void)
   TEST_ASSERT(!accumulator_iterator_next(handle, &iter));
 }
 
-static void check_iterator_advances_to_the_end(void)
-{
+static void check_iterator_advances_to_the_end(void) {
   accumulator_h handle = s_test_handle;
   uint8_t test_bufA[] = {1, 2, 3, 4, 5};
   TEST_ASSERT(accumulator_insert(handle, test_bufA, sizeof(test_bufA)));
@@ -124,20 +119,17 @@ static void check_iterator_advances_to_the_end(void)
   TEST_ASSERT(val == 5);
 }
 
-TestRef accumulator_get_tests(void)
-{
-  EMB_UNIT_TESTFIXTURES(fixture) {
+TestRef accumulator_get_tests(void) {
+  EMB_UNIT_TESTFIXTURES(fixture){
       new_TestFixture("Accumulator API Tests 1", check_acc_api),
       new_TestFixture("Accumulator Wraps around", check_wrap_around),
       new_TestFixture("Accumulator Iterator Works", check_iterator),
-      new_TestFixture("Iterator advances to end", check_iterator_advances_to_the_end)
-  };
+      new_TestFixture("Iterator advances to end", check_iterator_advances_to_the_end)};
   EMB_UNIT_TESTCALLER(accumulator_tests, "Accumulator tests", setup, teardown, fixture);
-  return (TestRef) &accumulator_tests;
+  return (TestRef)&accumulator_tests;
 }
 
-int main()
-{
+int main() {
   TestRunner_start();
   {
     TestRunner_runTest(accumulator_get_tests());

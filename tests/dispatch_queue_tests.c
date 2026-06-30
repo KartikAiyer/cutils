@@ -36,76 +36,71 @@ DISPATCH_QUEUE_STORE_DEF(test_queue_2);
 DISPATCH_QUEUE_STORE_DECL(test_queue_3, 32, 4096);
 DISPATCH_QUEUE_STORE_DEF(test_queue_3);
 
-typedef struct
-{
+typedef struct {
   uint32_t sleep_time;
   uint32_t val;
 } action_data_t;
 
-static void action_1(void *arg1, void *arg2)
-{
-  action_data_t *p_data = (action_data_t *) arg1;
+static void action_1(void *arg1, void *arg2) {
+  action_data_t *p_data = (action_data_t *)arg1;
   task_sleep(p_data->sleep_time);
   p_data->val = 1;
 }
 
-static void test_queue(dispatch_queue_t *p_queue)
-{
+static void test_queue(dispatch_queue_t *p_queue) {
   action_data_t data = {.sleep_time = 5};
   TEST_ASSERT(dispatch_async_f(p_queue, action_1, &data, NULL));
   dispatch_queue_destroy(p_queue);
   TEST_ASSERT_MESSAGE(data.val == 1, "Action should modify test value on dispatch queue");
 }
 
-static void can_create_and_run_action(void)
-{
+static void can_create_and_run_action(void) {
   dispatch_queue_create_params_t params = {0};
   dispatch_queue_t *p_queue = 0;
-  DISPATCH_QUEUE_CREATE_PARAMS_INIT(params, test_queue_1, "test_dispatch_queue1", CUTILS_TASK_PRIORITY_MEDIUM);
+  DISPATCH_QUEUE_CREATE_PARAMS_INIT(
+      params, test_queue_1, "test_dispatch_queue1", CUTILS_TASK_PRIORITY_MEDIUM);
   p_queue = dispatch_queue_create(&params);
   TEST_ASSERT_MESSAGE(p_queue, "Dispatch queue should be created successfully");
   test_queue(p_queue);
   memset(&params, 0, sizeof(params));
 
-  //Task 2
-  DISPATCH_QUEUE_CREATE_PARAMS_INIT(params, test_queue_2, "test_dispatch_queue2", CUTILS_TASK_PRIORITY_MID_HIGH);
+  // Task 2
+  DISPATCH_QUEUE_CREATE_PARAMS_INIT(
+      params, test_queue_2, "test_dispatch_queue2", CUTILS_TASK_PRIORITY_MID_HIGH);
   p_queue = dispatch_queue_create(&params);
   TEST_ASSERT_MESSAGE(p_queue, "Dispatch queue should be created successfully");
   test_queue(p_queue);
   memset(&params, 0, sizeof(params));
 
-  //Task 3
-  DISPATCH_QUEUE_CREATE_PARAMS_INIT(params, test_queue_3, "test_dispatch_queue3", CUTILS_TASK_PRIORITY_MID_HIGH);
+  // Task 3
+  DISPATCH_QUEUE_CREATE_PARAMS_INIT(
+      params, test_queue_3, "test_dispatch_queue3", CUTILS_TASK_PRIORITY_MID_HIGH);
   p_queue = dispatch_queue_create(&params);
   TEST_ASSERT_MESSAGE(p_queue, "Dispatch queue should be created successfully");
   test_queue(p_queue);
   memset(&params, 0, sizeof(params));
 }
 
-typedef struct
-{
+typedef struct {
   dispatch_queue_t *p_queue_hi, *p_queue_lo;
   uint32_t val;
 } task_action_test_data_t;
 
-static void lo_action(void *arg1, void *arg2)
-{
-  task_action_test_data_t *p_data = (task_action_test_data_t *) arg1;
+static void lo_action(void *arg1, void *arg2) {
+  task_action_test_data_t *p_data = (task_action_test_data_t *)arg1;
   p_data->val--;
 }
 
-static void hi_action(void *arg1, void *arg2)
-{
-  task_action_test_data_t *p_data = (task_action_test_data_t *) arg1;
+static void hi_action(void *arg1, void *arg2) {
+  task_action_test_data_t *p_data = (task_action_test_data_t *)arg1;
 
   TEST_ASSERT(p_data);
   p_data->val++;
   p_data->val++;
 }
 
-static void medium_action(void *arg1, void *arg2)
-{
-  task_action_test_data_t *p_data = (task_action_test_data_t *) arg1;
+static void medium_action(void *arg1, void *arg2) {
+  task_action_test_data_t *p_data = (task_action_test_data_t *)arg1;
 
   TEST_ASSERT(p_data);
   for (uint32_t i = 0; i < 4; i++) {
@@ -117,21 +112,23 @@ static void medium_action(void *arg1, void *arg2)
   task_sleep(100);
 }
 
-static void can_post_between_queues(void)
-{
+static void can_post_between_queues(void) {
   task_action_test_data_t data = {0};
   dispatch_queue_t *p_queue_mid = 0;
   dispatch_queue_create_params_t params = {0};
 
-  DISPATCH_QUEUE_CREATE_PARAMS_INIT(params, test_queue_1, "test exec hi", CUTILS_TASK_PRIORITY_HIGHEST);
+  DISPATCH_QUEUE_CREATE_PARAMS_INIT(
+      params, test_queue_1, "test exec hi", CUTILS_TASK_PRIORITY_HIGHEST);
   data.p_queue_hi = dispatch_queue_create(&params);
   TEST_ASSERT(data.p_queue_hi);
 
-  DISPATCH_QUEUE_CREATE_PARAMS_INIT(params, test_queue_2, "test exec mid", CUTILS_TASK_PRIORITY_MEDIUM);
+  DISPATCH_QUEUE_CREATE_PARAMS_INIT(
+      params, test_queue_2, "test exec mid", CUTILS_TASK_PRIORITY_MEDIUM);
   p_queue_mid = dispatch_queue_create(&params);
   TEST_ASSERT(p_queue_mid);
 
-  DISPATCH_QUEUE_CREATE_PARAMS_INIT(params, test_queue_3, "test exec lo", CUTILS_TASK_PRIORITY_MID_LO);
+  DISPATCH_QUEUE_CREATE_PARAMS_INIT(
+      params, test_queue_3, "test exec lo", CUTILS_TASK_PRIORITY_MID_LO);
   data.p_queue_lo = dispatch_queue_create(&params);
   TEST_ASSERT(data.p_queue_lo);
 
@@ -153,9 +150,9 @@ typedef struct _dispatch_queue_isr_test_t
 
 static dispatch_queue_isr_test_t s_isr_test = { 0 };
 
-#define      DQI_TEST_FLAG_ISR_SUCCESS   (1 << 0)
-#define      DQI_TEST_FLAG_ACTION_SUCCESS  (1 << 1)
-#define      DQI_TEST_FLAG_ISR_ERROR     (1 << 2)
+#define DQI_TEST_FLAG_ISR_SUCCESS (1 << 0)
+#define DQI_TEST_FLAG_ACTION_SUCCESS (1 << 1)
+#define DQI_TEST_FLAG_ISR_ERROR (1 << 2)
 
 static void dispatch_isr_test_action(void* arg1, void* arg2)
 {
@@ -209,9 +206,9 @@ typedef struct _dispatch_queue_app_timer_test_t
   event_flag_t flag;
 } dispatch_queue_app_timer_test_t;
 
-#define      DQAT_TEST_FLAG_TIMER_SUCCESS   (1 << 0)
-#define      DQAT_TEST_FLAG_ACTION_SUCCESS  (1 << 1)
-#define      DQAT_TEST_FLAG_TIMER_ERROR     (1 << 2)
+#define DQAT_TEST_FLAG_TIMER_SUCCESS (1 << 0)
+#define DQAT_TEST_FLAG_ACTION_SUCCESS (1 << 1)
+#define DQAT_TEST_FLAG_TIMER_ERROR (1 << 2)
 
 static void dispatch_app_timer_test_action(void *arg1, void *arg2)
 {
@@ -261,18 +258,14 @@ static void can_post_from_application_timer_callback(void)
   TEST_ASSERT(atomic_load_explicit(&s_timer_test.val, memory_order_acquire) == 1);
 }
 #endif
-static void setup(void)
-{
-}
+static void setup(void) {}
 
-static void teardown(void)
-{
-}
+static void teardown(void) {}
 
-TestRef dispatch_queue_get_tests(void)
-{
-  EMB_UNIT_TESTFIXTURES(fixture) {
-      new_TestFixture("Can Create and run an action on three different dispatch queues", can_create_and_run_action),
+TestRef dispatch_queue_get_tests(void) {
+  EMB_UNIT_TESTFIXTURES(fixture){
+      new_TestFixture("Can Create and run an action on three different dispatch queues",
+                      can_create_and_run_action),
       new_TestFixture("Can post between queues", can_post_between_queues),
 #if 0
       new_TestFixture("Can post from isr", can_post_from_isr),
@@ -280,7 +273,7 @@ TestRef dispatch_queue_get_tests(void)
 #endif
   };
   EMB_UNIT_TESTCALLER(dispatch_queue_tests, "dispatch_queue_tests", setup, teardown, fixture);
-  return (TestRef) &dispatch_queue_tests;
+  return (TestRef)&dispatch_queue_tests;
 }
 #if 0
 typedef struct _dispatch_after_test_data_t

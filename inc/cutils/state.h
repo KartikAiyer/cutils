@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include <cutils/types.h>
 #include <cutils/klist.h>
 #include <cutils/logger.h>
+#include <cutils/types.h>
 
 // /Forward Declarations
 struct _state_t;
@@ -36,81 +36,82 @@ struct _state_machine_t;
 
 /**
  * The state_init_f callback function is called after the specific state has been created.
- *  
- * The function assumes that the State passed is allocated of 
- * the appropriate type. ie. If you call funtion pointer on say 
- * StateReady type object, you need to pass the same StateReady 
- * object in as a parameter. 
- *  
- *  
- * \param pState State* An allocated and initialized state 
+ *
+ * The function assumes that the State passed is allocated of
+ * the appropriate type. ie. If you call funtion pointer on say
+ * StateReady type object, you need to pass the same StateReady
+ * object in as a parameter.
+ *
+ *
+ * \param pState State* An allocated and initialized state
  *                      sruct.
  */
-typedef void (*state_init_f) (struct _state_machine_t * p_sm, struct _state_t * pState);
+typedef void (*state_init_f)(struct _state_machine_t *p_sm, struct _state_t *pState);
 
 /**
- * Function pointer is called when entering the state. 
- *  
- * \param pState State* A valid state pointer 
+ * Function pointer is called when entering the state.
+ *
+ * \param pState State* A valid state pointer
  */
-typedef void (*state_enter_f) (struct _state_machine_t * p_sm, struct _state_t * pState);
+typedef void (*state_enter_f)(struct _state_machine_t *p_sm, struct _state_t *pState);
 
 /**
  * Funtion pointer is called when exiting the state
- * 
+ *
  * \param pState State* A valid State pointer
  */
-typedef void (*state_exit_f) (struct _state_machine_t * p_sm, struct _state_t * pState);
+typedef void (*state_exit_f)(struct _state_machine_t *p_sm, struct _state_t *pState);
 
 /**
- * Query function which responds true if the event can be 
- * handled by the state. 
- *  
- * \param pState State* A Valid state pointer 
- * \param pEvetn AppEvent* pointer to event received. 
- *  
+ * Query function which responds true if the event can be
+ * handled by the state.
+ *
+ * \param pState State* A Valid state pointer
+ * \param pEvetn AppEvent* pointer to event received.
+ *
  * \return bool True if event can be handled false otherwise.
  */
-typedef bool(*state_is_valid_event_f) (struct _state_machine_t * p_sm, struct _state_t * pState,
+typedef bool (*state_is_valid_event_f)(struct _state_machine_t *p_sm,
+                                       struct _state_t *pState,
                                        void *pEvent);
 
 /**
- * Function pointer to State Event Handler. 
- *  
- * The function handles the incoming event and returns state ID 
- * to transition to. The returned state Id can be the current 
- * state indicating that no state transition is required. 
- *  
- * \param pState State* Pointer to current State 
- * \param pEvent AppEvent* Pointer to received event. 
- *  
- * \return uint32_t A desitination stateId. This can be the 
+ * Function pointer to State Event Handler.
+ *
+ * The function handles the incoming event and returns state ID
+ * to transition to. The returned state Id can be the current
+ * state indicating that no state transition is required.
+ *
+ * \param pState State* Pointer to current State
+ * \param pEvent AppEvent* Pointer to received event.
+ *
+ * \return uint32_t A desitination stateId. This can be the
  *         current stateId as well thus implying no state
  *         transition required.
  */
-typedef uint32_t(*state_handle_event_f) (struct _state_machine_t * p_sm, struct _state_t * pState,
+typedef uint32_t (*state_handle_event_f)(struct _state_machine_t *p_sm,
+                                         struct _state_t *pState,
                                          void *pEvent);
 
 /**
- * \struct State 
- * \brief Data structure that encapsulates an application state. 
- *  
- * The data structure is the base representation of a state 
- * which holds all the generic state handling function pointers. 
- * Specific states should have an instance of this data 
- * structure as the first memeber of their data structure. 
+ * \struct State
+ * \brief Data structure that encapsulates an application state.
+ *
+ * The data structure is the base representation of a state
+ * which holds all the generic state handling function pointers.
+ * Specific states should have an instance of this data
+ * structure as the first memeber of their data structure.
  * eg.
-  
- * typedef struct _StateReady 
+
+ * typedef struct _StateReady
  * {
  *   State base;
  *   bool isReady;
- * }StateReady; 
- *  
- * The data structure can be added to a Klist. Refer to klist.h 
+ * }StateReady;
+ *
+ * The data structure can be added to a Klist. Refer to klist.h
  */
-typedef struct _state_t
-{
+typedef struct _state_t {
   /** List elem so that it can be queued in a list. Must be
    *  first element */
   KListElem listElem;
@@ -143,9 +144,9 @@ typedef struct _state_t
   bool entered_once;
 } state_t;
 
-#define STATE_CLOG(state, p_event, str, ...)\
-console_log(&((state)->log), p_event, "%s(%u): " str, __FUNCTION__, __LINE__, ##__VA_ARGS__)
+#define STATE_CLOG(state, p_event, str, ...)                                                       \
+  console_log(&((state)->log), p_event, "%s(%u): " str, __FUNCTION__, __LINE__, ##__VA_ARGS__)
 
-//TODO: Renable this
+// TODO: Renable this
 #define STATE_SLOG(state, p_event, str, ...)
-//system_log(&((state)->log), p_event, "%s(%u)" str, __FUNCTION__, __LINE__, ##__VA_ARGS__)
+// system_log(&((state)->log), p_event, "%s(%u)" str, __FUNCTION__, __LINE__, ##__VA_ARGS__)
