@@ -171,6 +171,7 @@ TestRef notifier_static_store_get_tests(void) {
   return (TestRef)&notifier_tests;
 }
 
+#ifndef AGGREGATE_RUNNER
 int main() {
   TestRunner_start();
   {
@@ -180,3 +181,4 @@ int main() {
   TestRunner_end();
   return 0;
 }
+#endif // AGGREGATE_RUNNER

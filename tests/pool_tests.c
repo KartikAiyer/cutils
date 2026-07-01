@@ -357,6 +357,7 @@ TestRef pool_get_tests() {
   return (TestRef)&pool_basic_test;
 }
 
+#ifndef AGGREGATE_RUNNER
 int main() {
   TestRunner_start();
   {
@@ -365,3 +366,4 @@ int main() {
   TestRunner_end();
   return 0;
 }
+#endif // AGGREGATE_RUNNER
