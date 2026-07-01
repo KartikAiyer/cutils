@@ -5,7 +5,7 @@ add_subdirectory("${PROJECT_SOURCE_DIR}/extern/embunit" "extern/embunit")
 
 set(API_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/inc" "${CMAKE_CURRENT_BINARY_DIR}/inc")
 
-# --- Migrated suites (from gtest → embunit) ---
+# --- Migrated suites (now pure C on embunit) ---
 package_add_embunit_test(NAME klist_test FILES klist_test.c)
 package_add_embunit_test(NAME mem_ring_buf_test FILES mem_ring_buffer_test.c LIBS cutils)
 package_add_embunit_test(NAME os_test FILES os_test.c LIBS cutils)
