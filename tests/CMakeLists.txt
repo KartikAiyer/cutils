@@ -27,10 +27,11 @@ target_include_directories(mem_ring_buf_test PRIVATE "${PROJECT_SOURCE_DIR}/exte
 target_link_libraries(mem_ring_buf_test cutils embunit)
 target_compile_features(mem_ring_buf_test PRIVATE c_std_11)
 
-package_add_test(os_test os_test.cpp)
-target_compile_features(os_test PRIVATE cxx_std_17 c_std_11)
-target_include_directories(os_test PRIVATE "${LIBRARY_INCLUDE_DIR}")
-target_link_libraries(os_test cutils)
+add_executable(os_test os_test.c)
+target_include_directories(os_test PRIVATE "${PROJECT_SOURCE_DIR}/extern/embunit"
+                                            "${LIBRARY_INCLUDE_DIR}")
+target_link_libraries(os_test cutils embunit)
+target_compile_features(os_test PRIVATE c_std_11)
 
 package_add_test(queue_tests queue_tests.cpp)
 target_compile_features(queue_tests PRIVATE cxx_std_17 c_std_11)
@@ -38,7 +39,7 @@ target_include_directories(queue_tests PRIVATE "${LIBRARY_INCLUDE_DIR}")
 target_link_libraries(queue_tests cutils)
 get_target_property(TARGET_INCLUDES queue_tests INCLUDE_DIRECTORIES)
 
-package_add_test(all_tests queue_tests.cpp os_test.cpp)
+package_add_test(all_tests queue_tests.cpp)
 target_compile_features(all_tests PRIVATE cxx_std_17 c_std_11)
 target_include_directories(all_tests PRIVATE "${LIBRARY_INCLUDE_DIR}")
 target_link_libraries(all_tests cutils)
