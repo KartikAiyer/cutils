@@ -9,8 +9,8 @@ if(GIT_FOUND
    AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git"
    AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.gitmodules")
   # Update submodules as needed (only when this branch actually declares any). master has no
-  # submodules after the googletest -> FetchContent migration (issue #4); other branches that still
-  # carry extern/FreeRTOS-Kernel keep a .gitmodules and this step runs for them.
+  # submodules (the test framework was moved to extern/embunit and is no longer fetched); other
+  # branches that still carry extern/FreeRTOS-Kernel keep a .gitmodules and this step runs for them.
   option(GIT_SUBMODULE "Check submodules during build" ON)
   if(GIT_SUBMODULE)
     message(STATUS "Submodule update")

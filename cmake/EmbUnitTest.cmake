@@ -1,11 +1,11 @@
 # EmbUnitTest.cmake -- helper macros for embUnit-based C test suites
-# This replaces TestUtil.cmake which was tied to googletest.
+# Replaces the former TestUtil.cmake (now removed).
 
 #[[
   package_add_embunit_test(NAME <name> FILES <src1> [src2 ...] [LIBS <lib> ...])
 
   Creates an embUnit test executable and registers it with CTest.
-  Equivalent to the old `package_add_test` target, but without Google Test.
+  Equivalent to the former `package_add_test` target, but for embUnit.
 ]]
 macro(package_add_embunit_test)
   cmake_parse_arguments(PAE "" "NAME" "FILES;LIBS" ${ARGN})
