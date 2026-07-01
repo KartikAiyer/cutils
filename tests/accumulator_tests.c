@@ -129,6 +129,7 @@ TestRef accumulator_get_tests(void) {
   return (TestRef)&accumulator_tests;
 }
 
+#ifndef AGGREGATE_RUNNER
 int main() {
   TestRunner_start();
   {
@@ -137,3 +138,4 @@ int main() {
   TestRunner_end();
   return 0;
 }
+#endif // AGGREGATE_RUNNER

@@ -215,6 +215,7 @@ TestRef state_event_loop_get_tests(void) {
   return (TestRef)&sel_tests;
 }
 
+#ifndef AGGREGATE_RUNNER
 int main() {
   TestRunner_start();
   {
@@ -223,3 +224,4 @@ int main() {
   TestRunner_end();
   return 0;
 }
+#endif // AGGREGATE_RUNNER

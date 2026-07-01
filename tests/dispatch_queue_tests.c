@@ -349,6 +349,7 @@ TestRef dispatch_queue_timer_get_tests(void)
 }
 #endif
 
+#ifndef AGGREGATE_RUNNER
 int main() {
   TestRunner_start();
   {
@@ -357,3 +358,4 @@ int main() {
   TestRunner_end();
   return 0;
 }
+#endif // AGGREGATE_RUNNER

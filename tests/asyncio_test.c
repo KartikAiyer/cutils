@@ -360,6 +360,7 @@ TestRef asyncio_get_tests(void) {
   EMB_UNIT_TESTCALLER(asyncio_basic_tests, "Asyncio interface Tests", setup, teardown, fixtures);
   return (TestRef)&asyncio_basic_tests;
 }
+#ifndef AGGREGATE_RUNNER
 int main() {
   TestRunner_start();
   {
@@ -368,3 +369,4 @@ int main() {
   TestRunner_end();
   return 0;
 }
+#endif // AGGREGATE_RUNNER

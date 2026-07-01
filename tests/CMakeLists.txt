@@ -25,3 +25,16 @@ endif()
 package_add_embunit_test(NAME accumulator_tests FILES accumulator_tests.c)
 package_add_embunit_test(NAME asyncio_tests FILES asyncio_test.c)
 package_add_embunit_test(NAME state_event_loop_tests FILES state_event_loop_tests.c)
+
+# --- Aggregate test binary ---
+# Only includes suites that run reliably on the host platform.
+# dispatch_queue, asyncio, and state_event_loop are excluded because
+# they depend on task/thread infrastructure unavailable on pthread host.
+add_executable(all_embunit_tests all_embunit_tests.c klist_test.c mem_ring_buffer_test.c os_test.c queue_test.c pool_tests.c accumulator_tests.c notifier_tests.c)
+target_include_directories(all_embunit_tests PRIVATE "${PROJECT_SOURCE_DIR}/extern/embunit"
+                                                    "${API_INCLUDE_DIR}")
+target_compile_definitions(all_embunit_tests PRIVATE AGGREGATE_RUNNER)
+target_link_libraries(all_embunit_tests cutils embunit)
+target_compile_features(all_embunit_tests PRIVATE c_std_11)
+add_test(NAME all_embunit_tests COMMAND all_embunit_tests)
+set_target_properties(all_embunit_tests PROPERTIES FOLDER tests)
