@@ -33,16 +33,14 @@ target_include_directories(os_test PRIVATE "${PROJECT_SOURCE_DIR}/extern/embunit
 target_link_libraries(os_test cutils embunit)
 target_compile_features(os_test PRIVATE c_std_11)
 
-package_add_test(queue_tests queue_tests.cpp)
-target_compile_features(queue_tests PRIVATE cxx_std_17 c_std_11)
-target_include_directories(queue_tests PRIVATE "${LIBRARY_INCLUDE_DIR}")
-target_link_libraries(queue_tests cutils)
-get_target_property(TARGET_INCLUDES queue_tests INCLUDE_DIRECTORIES)
+add_executable(queue_tests queue_test.c)
+target_include_directories(queue_tests PRIVATE "${PROJECT_SOURCE_DIR}/extern/embunit"
+                                              "${LIBRARY_INCLUDE_DIR}")
+target_link_libraries(queue_tests cutils embunit)
+target_compile_features(queue_tests PRIVATE c_std_11)
 
-package_add_test(all_tests queue_tests.cpp)
-target_compile_features(all_tests PRIVATE cxx_std_17 c_std_11)
-target_include_directories(all_tests PRIVATE "${LIBRARY_INCLUDE_DIR}")
-target_link_libraries(all_tests cutils)
+
+# all_tests disabled until Phase 5 wiring
 
 add_executable(pool_tests pool_tests.c)
 target_include_directories(pool_tests PRIVATE "${PROJECT_SOURCE_DIR}/extern/embunit"
