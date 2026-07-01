@@ -55,7 +55,7 @@ static void mutexTimedAPIShouldWorkAsExpected(void) {
   TEST_ASSERT(mutex_unlock(&s_mtx));
 }
 
-/* ---- EventFlagTest (2 tests) ---- */
+/* ---- Event Flag tests (2 tests) ---- */
 
 static event_flag_t s_evt = {0};
 
