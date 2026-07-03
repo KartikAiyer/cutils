@@ -25,8 +25,8 @@
 #include <cutils/notifier.h>
 #include <cutils/task.h>
 #include <embUnit/embUnit.h>
-#include <malloc.h>
 #include <stdlib.h>
+#include <string.h>
 
 /**
  * @struct test_notification_t
@@ -44,12 +44,17 @@ typedef struct _test1_data_t {
   notifier_create_params_t create_params;
 } test1_data_t;
 
+#define NOTIFIER_TEST_MAX_CATS (256)
+#define NOTIFIER_TEST_MAX_POSTS (256)
 /**
  * This creates the static storage needed to create a notifier that can have 256 categories and can
  * have a total of 256 callback registrations. The details of each callback are represented by
  * test_notification_t
  */
-NOTIFIER_STORE_DECL(notifier_test1, 256, 256, sizeof(test_notification_t));
+NOTIFIER_STORE_DECL(notifier_test1,
+                    NOTIFIER_TEST_MAX_CATS,
+                    NOTIFIER_TEST_MAX_POSTS,
+                    sizeof(test_notification_t));
 NOTIFIER_STORE_DEF(notifier_test1);
 
 static test1_data_t s_data;
@@ -75,6 +80,9 @@ typedef struct {
   uint32_t num_of_regs;
 } posted_counts_t;
 
+static posted_counts_t s_count_array[NOTIFIER_TEST_MAX_CATS];
+static test_notification_t *s_posted_array[NOTIFIER_TEST_MAX_POSTS];
+
 static void test_notifier_callback(notifier_block_t *block, uint32_t category, void *notif_data) {
   posted_counts_t *count_array = (posted_counts_t *)notif_data;
 
@@ -92,14 +100,14 @@ static void can_post_notification(void) {
 }
 
 static void counting_notification_post(notifier_t *notifier, uint32_t max_cat, uint32_t max_not) {
-  posted_counts_t *count_array = malloc(sizeof(posted_counts_t) * max_cat);
+  posted_counts_t *count_array = s_count_array;
   uint32_t number_of_posts = rand() % max_not;
-  test_notification_t **posted_array = malloc(sizeof(test_notification_t *) * number_of_posts);
+  test_notification_t **posted_array = s_posted_array;
 
-  TEST_ASSERT(count_array);
-  TEST_ASSERT(posted_array);
-  memset(count_array, 0, sizeof(posted_counts_t) * max_cat);
-  memset(posted_array, 0, sizeof(test_notification_t *) * number_of_posts);
+  TEST_ASSERT(max_cat <= NOTIFIER_TEST_MAX_CATS);
+  TEST_ASSERT(max_not <= NOTIFIER_TEST_MAX_POSTS);
+  memset(count_array, 0, sizeof(posted_counts_t) * NOTIFIER_TEST_MAX_CATS);
+  memset(posted_array, 0, sizeof(test_notification_t *) * NOTIFIER_TEST_MAX_POSTS);
   for (uint32_t i = 0; i < number_of_posts; i++) {
     uint32_t sample_input = rand() % max_cat;
     test_notification_t *notif =
@@ -133,8 +141,6 @@ static void counting_notification_post(notifier_t *notifier, uint32_t max_cat, u
   for (uint32_t i = 0; i < number_of_posts; i++) {
     notifier_deregister_notification_block(notifier, &posted_array[i]->base);
   }
-  free(count_array);
-  free(posted_array);
 }
 
 typedef struct {
