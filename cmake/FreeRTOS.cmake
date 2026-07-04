@@ -33,12 +33,15 @@ FetchContent_Declare(
 
 # --- Select the Cortex-M7 (r0p1) GCC port. Works for all M7 revisions per ---
 # --- FreeRTOS's portable/GCC/ARM_CM7/ReadMe.txt; QEMU's cortex-m7 is r1p2. ---
-set(FREERTOS_PORT
-    GCC_ARM_CM7
-    CACHE STRING "FreeRTOS port name (see portable/CMakeLists.txt)")
+if(NOT DEFINED CUTILS_FREERTOS_PORT)
+  message(FATAL_ERROR "You have not defined a target chip for FreeRTOS")
+else()
+  set(FREERTOS_PORT
+      ${CUTILS_FREERTOS_PORT}
+      CACHE STRING "FreeRTOS port name (see portable/CMakeLists.txt)")
+endif()
 
-# --- No FREERTOS_HEAP: Phase 0 step 0 removed the tree's only malloc user, ---
-# --- so configSUPPORT_DYNAMIC_ALLOCATION=0 and no heap implementation is needed.
+# --- No FREERTOS_HEAP: --- so configSUPPORT_DYNAMIC_ALLOCATION=0
 
 # --- Provide the freertos_config INTERFACE target upstream requires.       ---
 # FreeRTOSConfig.h lives with the FreeRTOS test harness (tests/freertos/) and is configured by that
