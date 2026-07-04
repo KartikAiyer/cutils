@@ -18,7 +18,13 @@ SpacesInParens: Never
 BreakBeforeBraces: Attach
 
 # When a declaration/call wraps: one parameter per line, aligned to the first.
-AlignAfterOpenBracket: true            # true == Align
+AlignAfterOpenBracket: Align # true == Align
+AlignConsecutiveMacros: 
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: false
+  AlignCompound: false
+  PadOperators: false
 BinPackParameters: OnePerLine
 BinPackArguments: false
 AllowAllParametersOfDeclarationOnNextLine: true
