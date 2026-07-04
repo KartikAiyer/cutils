@@ -3,7 +3,7 @@
 # cmake = { "cmake_format" } formatters_by_ft mapping runs cmake-format on save
 # for the cmake filetype). cmake-format auto-discovers this file from the repo root.
 format:
-  line_width: 100
+  line_width: 120
   tab_size: 2
   use_tabchars: false
   # No space before the opening paren for ANY command -- control (if/foreach/
@@ -12,7 +12,7 @@ format:
   # so `set( X )` -> `set(X)`.
   separate_ctrl_name_with_space: false
   separate_fn_name_with_space: false
-  dangle_parens: false
+  dangle_parens: true  
   command_case: canonical
   keyword_case: unchanged
   enable_sort: true
