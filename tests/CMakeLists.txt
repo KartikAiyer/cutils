@@ -15,24 +15,25 @@ package_add_embunit_test(NAME queue_tests FILES queue_test.c LIBS cutils)
 package_add_embunit_test(NAME pool_tests FILES pool_tests.c)
 package_add_embunit_test(NAME dispatch_queue_tests FILES dispatch_queue_tests.c)
 
-# notifier_tests requires malloc.h
-check_include_file(malloc.h HAVE_MALLOC_H)
-check_include_file(stdlib.h HAVE_STDLIB_H)
-if(HAVE_MALLOC_H AND HAVE_STDLIB_H)
-  package_add_embunit_test(NAME notifier_tests FILES notifier_tests.c)
-endif()
-
 package_add_embunit_test(NAME accumulator_tests FILES accumulator_tests.c)
 package_add_embunit_test(NAME asyncio_tests FILES asyncio_test.c)
 package_add_embunit_test(NAME state_event_loop_tests FILES state_event_loop_tests.c)
 
 # --- Aggregate test binary ---
-# Only includes suites that run reliably on the host platform.
-# dispatch_queue, asyncio, and state_event_loop are excluded because
-# they depend on task/thread infrastructure unavailable on pthread host.
-add_executable(all_embunit_tests all_embunit_tests.c klist_test.c mem_ring_buffer_test.c os_test.c queue_test.c pool_tests.c accumulator_tests.c notifier_tests.c)
-target_include_directories(all_embunit_tests PRIVATE "${PROJECT_SOURCE_DIR}/extern/embunit"
-                                                    "${API_INCLUDE_DIR}")
+# Only includes suites that run reliably on the host platform. dispatch_queue, asyncio, and state_event_loop are
+# excluded because they depend on task/thread infrastructure unavailable on pthread host.
+add_executable(
+  all_embunit_tests
+  all_embunit_tests.c
+  klist_test.c
+  mem_ring_buffer_test.c
+  os_test.c
+  queue_test.c
+  pool_tests.c
+  accumulator_tests.c
+  notifier_tests.c
+)
+target_include_directories(all_embunit_tests PRIVATE "${PROJECT_SOURCE_DIR}/extern/embunit" "${API_INCLUDE_DIR}")
 target_compile_definitions(all_embunit_tests PRIVATE AGGREGATE_RUNNER)
 target_link_libraries(all_embunit_tests cutils embunit)
 target_compile_features(all_embunit_tests PRIVATE c_std_11)
