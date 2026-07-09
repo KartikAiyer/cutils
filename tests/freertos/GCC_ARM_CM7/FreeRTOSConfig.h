@@ -35,3 +35,7 @@
 #define INCLUDE_xTaskGetCurrentTaskHandle   (1)
 #define INCLUDE_uxTaskGetStackHighWaterMark (0)
 #define INCLUDE_xTaskGetIdleTaskHandle      (0)
+
+#define vPortSVCHandler                     SVC_Handler
+#define xPortPendSVHandler                  PendSV_Handler
+#define xPortSysTickHandler                 SysTick_Handler
