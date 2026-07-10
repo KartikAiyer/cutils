@@ -43,6 +43,11 @@ typedef struct _event_flag_t {
   EventGroupHandle_t handle;
 } event_flag_t;
 
+/* FreeRTOS reserves the upper 8 bits of EventBits_t for internal control
+ * (tracking blocked tasks). Mask all flag arguments to the 24 usable bits so
+ * callers passing 0xFFFFFFFF ("all flags") don't trip configASSERT. */
+#define EVENT_FLAG_VALID_BITS 0x00FFFFFFU
+
 static inline bool event_flag_new(event_flag_t *flags) {
   if (flags) {
     flags->handle = xEventGroupCreateStatic(&flags->control_block);
@@ -91,7 +96,7 @@ static inline bool event_flag_wait(event_flag_t *flags,
       break;
     }
     EventBits_t got = xEventGroupWaitBits(
-        flags->handle, required_flags, xClearOnExit, xWaitForAllBits, wait_ticks);
+        flags->handle, required_flags & EVENT_FLAG_VALID_BITS, xClearOnExit, xWaitForAllBits, wait_ticks);
     if (actual_flags)
       *actual_flags = (uint32_t)got;
     if (xWaitForAllBits == pdTRUE) {
@@ -105,7 +110,7 @@ static inline bool event_flag_wait(event_flag_t *flags,
 
 static inline bool event_flag_send(event_flag_t *flags, uint32_t flag_bits) {
   if (flags && flags->handle) {
-    xEventGroupSetBits(flags->handle, (EventBits_t)flag_bits);
+    xEventGroupSetBits(flags->handle, (EventBits_t)(flag_bits & EVENT_FLAG_VALID_BITS));
     return true;
   }
   return false;
@@ -113,7 +118,7 @@ static inline bool event_flag_send(event_flag_t *flags, uint32_t flag_bits) {
 
 static inline bool event_flag_clear(event_flag_t *flags, uint32_t flag_bits) {
   if (flags && flags->handle) {
-    xEventGroupClearBits(flags->handle, (EventBits_t)flag_bits);
+    xEventGroupClearBits(flags->handle, (EventBits_t)(flag_bits & EVENT_FLAG_VALID_BITS));
     return true;
   }
   return false;
