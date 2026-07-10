@@ -42,6 +42,7 @@ extern "C" {
 void TestRunner_start(void);
 void TestRunner_runTest(Test* test);
 void TestRunner_end(void);
+unsigned short TestRunner_failureCount(void);
 
 #ifdef	__cplusplus
 }

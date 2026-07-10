@@ -109,3 +109,7 @@ void TestRunner_end(void)
 		stdimpl_print(" tests)\n");
 	}
 }
+
+unsigned short TestRunner_failureCount(void) {
+  return (result_.failureCount > 0) ? 1 : 0;
+}
