@@ -30,6 +30,9 @@ BinPackArguments: false
 AllowAllParametersOfDeclarationOnNextLine: true
 AllowAllArgumentsOnNextLine: true
 
+IncludeBlocks: Preserve
+SortIncludes: Never
+
 # Pointer asterisk on the right of the type: `state_t *p`, `void *ctx`.
 PointerAlignment: Right
 DerivePointerAlignment: false
