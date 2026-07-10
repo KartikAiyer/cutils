@@ -1,6 +1,10 @@
 #include <FreeRTOSConfig.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/unistd.h>
 
 typedef struct {
   volatile uint32_t DATA;
@@ -86,7 +90,72 @@ int _fstat(int fd, struct stat *st) {
   return 0;
 }
 
+/**
+ * There is a small heap just for the tests and the use of rand
+ */
 void *_sbrk(int incr) {
-  (void)incr;
-  return (void *)-1;
+  extern char __end__;
+  extern char __HeapLimit;
+
+  static char *heap_ptr = NULL;
+  char *prev;
+
+  if (heap_ptr == NULL)
+    heap_ptr = &__end__;
+
+  prev = heap_ptr;
+  if (heap_ptr + incr > &__HeapLimit) {
+    return (void *)-1;
+  }
+  heap_ptr += incr;
+  return (void *)prev;
+}
+
+__attribute__((noreturn)) void _exit(int status) { semihost_exit(status); }
+
+pid_t _getpid(void) { return (pid_t)1; }
+
+int _kill(pid_t pid, int sig) { return -1; }
+
+int _gettimeofday(struct timeval *tv, void *tz) {
+  (void)tz;
+  if (tv) {
+    tv->tv_sec = 0;
+    tv->tv_usec = 0;
+    return 0;
+  }
+  return -1;
+}
+
+uint64_t __atomic_fetch_add_8(void *mem, uint64_t val, int model) {
+  (void)model;
+  uint64_t *p = (uint64_t *)mem;
+  uint32_t primask;
+  __asm volatile("mrs %0, primask" : "=r"(primask));
+  __asm volatile("cpsid i" : : : "memory");
+  uint64_t old = *p;
+  *p = old + val;
+  __asm volatile("msr primask, %0" : : "r"(primask) : "memory");
+  return old;
+}
+uint64_t __atomic_load_8(const void *mem, int model) {
+  (void)model;
+  const uint64_t *p = (const uint64_t *)mem;
+  uint64_t value;
+  uint32_t primask;
+  __asm volatile("mrs %0, primask" : "=r"(primask));
+  __asm volatile("cpsid i" : : : "memory");
+  value = *p;
+  __asm volatile("msr primask, %0" : : "r"(primask) : "memory");
+  return value;
+}
+
+void __atomic_store_8(void *mem, uint64_t val, int model) {
+  (void)model;
+  uint64_t *p = (uint64_t *)mem;
+  uint32_t primask;
+  __asm volatile("mrs %0, primask" : "=r"(primask));
+  __asm volatile("cpsid i" : : : "memory");
+  *p = val;
+  __asm volatile("msr primask, %0" : : "r"(primask) : "memory");
 }

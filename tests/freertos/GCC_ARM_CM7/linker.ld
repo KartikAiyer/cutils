@@ -30,7 +30,7 @@ __RAM_SIZE = 0x00400000;
 
 __STACK_SIZE = 0x00000400;
 /* heap size is 0 */
-__HEAP_SIZE = 0x00000000;
+__HEAP_SIZE = 0x00200000;
 
 MEMORY
 {
