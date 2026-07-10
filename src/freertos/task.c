@@ -3,16 +3,24 @@
 #include <cutils/task.h>
 #include <string.h>
 
+static void task_wrapper(void *arg) {
+  task_t *task = (task_t *)arg;
+  task->func(task->ctx);
+  vTaskSuspend(NULL);  // wait for task_destroy_static to delete us
+}
+
 task_t *task_new_static(task_create_params_t *params) {
   if (params) {
     task_t *task = params->task;
-    task->task = xTaskCreateStatic(params->func,
+    task->func = params->func;
+    task->ctx = params->ctx;
+    task->task = xTaskCreateStatic(task_wrapper,
                                    params->label,
                                    params->stack_size / sizeof(StackType_t),
-                                   params->ctx,
+                                   task,
                                    params->priority,
                                    params->stack,
-                                   params->tcb);
+                                   &task->tcb);
     return task;
   }
   return 0;

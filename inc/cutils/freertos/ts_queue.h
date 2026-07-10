@@ -38,7 +38,7 @@ typedef struct _ts_queue_t {
 } ts_queue_t;
 
 #define TS_QUEUE_STORE(name)   _ts_queue_store_##name
-#define TS_QUEUE_STORE_T(name) TS_QUEUE_STORE(name)##_t
+#define TS_QUEUE_STORE_T(name) _ts_queue_store_##name##_t
 #define TS_QUEUE_STORE_DECL(name, size)                                                            \
   static size_t _ts_queue_store_num_elements_##name = size;                                        \
   typedef struct {                                                                                 \
@@ -63,6 +63,8 @@ typedef struct {
 static inline ts_queue_t *ts_queue_init(ts_queue_create_params_t *params) {
   if (params) {
     ts_queue_t *retval = params->queue;
+    if (params->size == 0 || (params->size & (params->size - 1)) != 0)
+      return NULL;
     retval->handle = xQueueCreateStatic(
         params->size, sizeof(void *), params->storage_array, &retval->control_block);
     return retval;
