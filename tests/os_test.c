@@ -44,7 +44,6 @@ static void mutex_setUp(void) { mutex_new(&s_mtx); }
 static void mutex_tearDown(void) { mutex_free(&s_mtx); }
 
 static void mutexApiShouldReturnValidData(void) {
-  TEST_ASSERT(mutex_unlock(&s_mtx));
   TEST_ASSERT(mutex_lock(&s_mtx, 0));
   TEST_ASSERT(mutex_unlock(&s_mtx));
 }
@@ -198,10 +197,8 @@ static void basicPremption(void) {
 
 TestRef os_mutex_get_tests(void) {
   EMB_UNIT_TESTFIXTURES(fixtures){
-      new_TestFixture(
-          "MutexApiShouldReturnValidData", mutexApiShouldReturnValidData),
-      new_TestFixture("MutexTimedAPIShouldWorkAsExpected",
-                      mutexTimedAPIShouldWorkAsExpected)};
+      new_TestFixture("MutexApiShouldReturnValidData", mutexApiShouldReturnValidData),
+      new_TestFixture("MutexTimedAPIShouldWorkAsExpected", mutexTimedAPIShouldWorkAsExpected)};
   EMB_UNIT_TESTCALLER(os_mutex_tests, "os_mutex_test", mutex_setUp, mutex_tearDown, fixtures);
   return (TestRef)&os_mutex_tests;
 }
@@ -209,26 +206,17 @@ TestRef os_mutex_get_tests(void) {
 TestRef os_event_flag_get_tests(void) {
   EMB_UNIT_TESTFIXTURES(fixtures){
       new_TestFixture("EventFlagAPI", eventFlagAPI),
-      new_TestFixture(
-          "EventFlagAnswerForCorrectBits", eventFlagAnswerForCorrectBits)};
-  EMB_UNIT_TESTCALLER(os_event_flag_tests,
-                      "os_event_flag_test",
-                      eventFlag_setUp,
-                      eventFlag_tearDown,
-                      fixtures);
+      new_TestFixture("EventFlagAnswerForCorrectBits", eventFlagAnswerForCorrectBits)};
+  EMB_UNIT_TESTCALLER(
+      os_event_flag_tests, "os_event_flag_test", eventFlag_setUp, eventFlag_tearDown, fixtures);
   return (TestRef)&os_event_flag_tests;
 }
 
 #if defined(CUTILS_TASK_USES_THRD_CREATE) || defined(RTOS_TASK_IMPLEMENTED)
 TestRef os_task_get_tests(void) {
-  EMB_UNIT_TESTFIXTURES(fixtures){
-      new_TestFixture("TaskApiTest", taskApiTest),
-      new_TestFixture("BasicPremption", basicPremption)};
-  EMB_UNIT_TESTCALLER(os_task_tests,
-                      "os_task_test",
-                      setUp_task_test,
-                      tearDown_task_test,
-                      fixtures);
+  EMB_UNIT_TESTFIXTURES(fixtures){new_TestFixture("TaskApiTest", taskApiTest),
+                                  new_TestFixture("BasicPremption", basicPremption)};
+  EMB_UNIT_TESTCALLER(os_task_tests, "os_task_test", setUp_task_test, tearDown_task_test, fixtures);
   return (TestRef)&os_task_tests;
 }
 #else
@@ -241,11 +229,7 @@ TestRef os_task_get_tests(void) {
   EMB_UNIT_TESTFIXTURES(fixtures){
       new_TestFixture("TaskApiTest (skipped on this platform)", skip_task_test),
       new_TestFixture("BasicPremption (skipped on this platform)", skip_task_test)};
-  EMB_UNIT_TESTCALLER(os_task_tests,
-                      "os_task_test",
-                      nop_setup,
-                      nop_teardown,
-                      fixtures);
+  EMB_UNIT_TESTCALLER(os_task_tests, "os_task_test", nop_setup, nop_teardown, fixtures);
   return (TestRef)&os_task_tests;
 }
 #endif

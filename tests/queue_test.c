@@ -96,6 +96,7 @@ static void queueShouldInsertAndUpdateCount(void) {
   } item = {0};
   kqueue_insert(&s_kqueue, &item.elem);
   TEST_ASSERT_EQUAL_INT(1, (int)kqueue_get_item_count(&s_kqueue));
+  kqueue_drop_all(&s_kqueue);
 }
 
 static void queueShouldDequeueAsExpected(void) {
@@ -161,9 +162,7 @@ static task_t *s_prod_task = NULL;
 static task_t *s_cons_task = NULL;
 static free_list_t *s_data_store = NULL;
 
-static void task_proc_fn(void *ctx) {
-  (void)ctx;
-}
+static void task_proc_fn(void *ctx) { (void)ctx; }
 
 static void task_cons_fn(void *ctx) {
   task_data_t *td = NULL;
@@ -268,13 +267,9 @@ TestRef queue_free_list_get_tests(void) {
   EMB_UNIT_TESTFIXTURES(fixtures){
       new_TestFixture("Can create free list with appropriate size",
                       freeListCanCreateWithAppropriateSize),
-      new_TestFixture("Can allocate as many as available",
-                      freeListCanAllocateAsManyAsAvailable)};
-  EMB_UNIT_TESTCALLER(queue_free_list_tests,
-                      "queue_free_list_test",
-                      free_list_setUp,
-                      free_list_tearDown,
-                      fixtures);
+      new_TestFixture("Can allocate as many as available", freeListCanAllocateAsManyAsAvailable)};
+  EMB_UNIT_TESTCALLER(
+      queue_free_list_tests, "queue_free_list_test", free_list_setUp, free_list_tearDown, fixtures);
   return (TestRef)&queue_free_list_tests;
 }
 
@@ -282,45 +277,32 @@ TestRef queue_kqueue_get_tests(void) {
   EMB_UNIT_TESTFIXTURES(fixtures){
       new_TestFixture("Queue should return count of zero for empty queue",
                       queueShouldReturnCountOfZeroForEmptyQueue),
-      new_TestFixture("Queue should insert and update count",
-                      queueShouldInsertAndUpdateCount),
-      new_TestFixture("Queue should dequeue as expected",
-                      queueShouldDequeueAsExpected),
-      new_TestFixture("Queue should maintain FIFO order",
-                      queueShouldMaintainFIFOOrder)};
-  EMB_UNIT_TESTCALLER(queue_kqueue_tests,
-                      "queue_kqueue_test",
-                      kqueue_setUp,
-                      kqueue_tearDown,
-                      fixtures);
+      new_TestFixture("Queue should insert and update count", queueShouldInsertAndUpdateCount),
+      new_TestFixture("Queue should dequeue as expected", queueShouldDequeueAsExpected),
+      new_TestFixture("Queue should maintain FIFO order", queueShouldMaintainFIFOOrder)};
+  EMB_UNIT_TESTCALLER(
+      queue_kqueue_tests, "queue_kqueue_test", kqueue_setUp, kqueue_tearDown, fixtures);
   return (TestRef)&queue_kqueue_tests;
 }
 
 TestRef queue_ts_queue_simple_get_tests(void) {
   EMB_UNIT_TESTFIXTURES(fixtures){
-      new_TestFixture("Queue should fail if size not power of 2",
-                      tsQueueFailIfSizeNotPowerOfTwo)};
-  EMB_UNIT_TESTCALLER(queue_ts_queue_simple_tests,
-                      "queue_ts_queue_simple_test",
-                      NULL,
-                      NULL,
-                      fixtures);
+      new_TestFixture("Queue should fail if size not power of 2", tsQueueFailIfSizeNotPowerOfTwo)};
+  EMB_UNIT_TESTCALLER(
+      queue_ts_queue_simple_tests, "queue_ts_queue_simple_test", NULL, NULL, fixtures);
   return (TestRef)&queue_ts_queue_simple_tests;
 }
 
 #if defined(CUTILS_TASK_USES_THRD_CREATE) || defined(RTOS_TASK_IMPLEMENTED)
 TestRef queue_ts_queue_get_tests(void) {
   EMB_UNIT_TESTFIXTURES(fixtures){
-      new_TestFixture(
-          "Should report zero count for empty queue", shouldReportZeroCountForEmptyQueue),
+      new_TestFixture("Should report zero count for empty queue",
+                      shouldReportZeroCountForEmptyQueue),
       new_TestFixture("Should block on empty queue", shouldBlockOnEmptyQueue),
       new_TestFixture("Should block on full queue", shouldBlockOnFullQueue),
       new_TestFixture("Producer consumer should run", producerConsumerShouldRun)};
-  EMB_UNIT_TESTCALLER(queue_ts_queue_tests,
-                      "queue_ts_queue_test",
-                      setUp_ts_queue,
-                      tearDown_ts_queue,
-                      fixtures);
+  EMB_UNIT_TESTCALLER(
+      queue_ts_queue_tests, "queue_ts_queue_test", setUp_ts_queue, tearDown_ts_queue, fixtures);
   return (TestRef)&queue_ts_queue_tests;
 }
 #else
@@ -330,11 +312,7 @@ TestRef queue_ts_queue_get_tests(void) {
   EMB_UNIT_TESTFIXTURES(fixtures){
       new_TestFixture("ts_queue tests skipped (no task threads)", skip_ts_queue_test),
       new_TestFixture("ts_queue blocked tests skipped (platform)", skip_ts_queue_test)};
-  EMB_UNIT_TESTCALLER(queue_ts_queue_tests_skip,
-                      "queue_ts_queue_test_skip",
-                      NULL,
-                      NULL,
-                      fixtures);
+  EMB_UNIT_TESTCALLER(queue_ts_queue_tests_skip, "queue_ts_queue_test_skip", NULL, NULL, fixtures);
   return (TestRef)&queue_ts_queue_tests_skip;
 }
 #endif
