@@ -227,14 +227,13 @@ static void launcher_action(void *ctx) {
   for (uint32_t i = 0; i < NUM_OF_THREADS; i++) {
     p_test_data->retainerStores[i] = malloc(sizeof(TASK_STATIC_STORE_T(retainer_task)));
     if (p_test_data->retainerStores[i]) {
-      task_create_params_t retainer_params = {.task = &p_test_data->retainerStores[i]->tsk,
-                                              .stack = p_test_data->retainerStores[i]->stack,
-                                              .stack_size =
-                                                  sizeof(p_test_data->retainerStores[i]->stack),
-                                              .label = "RetainerTask",
-                                              .priority = CUTILS_TASK_PRIORITY_MID_LO,
-                                              .func = pool_retainer_action,
-                                              .ctx = p_test_data};
+      task_create_params_t retainer_params;
+      TASK_INIT_CREATE_PARAMS_FROM_STORE(retainer_params,
+                                         p_test_data->retainerStores[i],
+                                         "RetainerTask",
+                                         CUTILS_TASK_PRIORITY_MID_LO,
+                                         pool_retainer_action,
+                                         p_test_data);
       memset(retainer_params.task, 0, sizeof(task_t));
       if (!task_new_static(&retainer_params)) {
         p_test_data->result = POOL_RETAIN_TEST_FAIL_CREATE;
@@ -283,14 +282,13 @@ static void pool_multi_thread_alloc_test(void) {
     s_test_data2.p_launcher_store = malloc(sizeof(TASK_STATIC_STORE_T(launcher_task)));
 
     if (s_test_data2.p_launcher_store) {
-      task_create_params_t launcher_params = {.task = &s_test_data2.p_launcher_store->tsk,
-                                              .stack = s_test_data2.p_launcher_store->stack,
-                                              .stack_size =
-                                                  sizeof(s_test_data2.p_launcher_store->stack),
-                                              .priority = CUTILS_TASK_PRIORITY_HIGHEST,
-                                              .label = "LauncherTask",
-                                              .func = launcher_action,
-                                              .ctx = &s_test_data2};
+      task_create_params_t launcher_params;
+      TASK_INIT_CREATE_PARAMS_FROM_STORE(launcher_params,
+                                         s_test_data2.p_launcher_store,
+                                         "LauncherTask",
+                                         CUTILS_TASK_PRIORITY_HIGHEST,
+                                         launcher_action,
+                                         &s_test_data2);
       launcher_task = task_new_static(&launcher_params);
       if (!launcher_task) {
         free(s_test_data2.p_launcher_store);
