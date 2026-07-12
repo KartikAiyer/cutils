@@ -78,15 +78,18 @@ typedef struct _task_create_params_t {
 #define TASK_STATIC_STORE_DEF(name)                                                                \
   TASK_STATIC_STORE_T(name) TASK_STATIC_STORE(name) __attribute__((section(".bss.noinit"), used))
 
-#define TASK_STATIC_INIT_CREATE_PARAMS(params, name, lbl, pri, fn, context)                        \
+#define TASK_INIT_CREATE_PARAMS_FROM_STORE(params, store_ptr, lbl, pri, fn, context)               \
   memset(&(params), 0, sizeof((params)));                                                          \
-  (params).task = &TASK_STATIC_STORE(name).tsk;                                                    \
+  (params).task = &(store_ptr)->tsk;                                                               \
   (params).label = (char *)(lbl);                                                                  \
   (params).priority = pri;                                                                         \
   (params).func = fn;                                                                              \
   (params).ctx = context;                                                                          \
-  (params).stack = TASK_STATIC_STORE(name).stack;                                                  \
-  (params).stack_size = sizeof(TASK_STATIC_STORE(name).stack)
+  (params).stack = (store_ptr)->stack;                                                             \
+  (params).stack_size = sizeof((store_ptr)->stack)
+
+#define TASK_STATIC_INIT_CREATE_PARAMS(params, name, lbl, pri, fn, context)                        \
+  TASK_INIT_CREATE_PARAMS_FROM_STORE(params, &TASK_STATIC_STORE(name), lbl, pri, fn, context)
 
 task_t *task_new_static(task_create_params_t *create_params);
 
