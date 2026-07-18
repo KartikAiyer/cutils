@@ -9,10 +9,10 @@
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,11 +22,41 @@
  * THE SOFTWARE.
  */
 
-
 #ifndef CUTILS_TS_QUEUE_H
 #define CUTILS_TS_QUEUE_H
 
 #include <cutils/Version.h>
 #include <cutils/@CUTILS_PLATFORM_TYPE@/ts_queue.h>
 
-#endif //CUTILS_TS_QUEUE_H
+/**
+ * @brief Initializes a thread-safe queue based on the provided parameters.
+ * @param params Parameters for creating the queue, such as capacity and item size.
+ * @return Pointer to the initialized queue object, or NULL on failure.
+ */
+static inline ts_queue_t *ts_queue_init(ts_queue_create_params_t *params);
+
+/**
+ * @brief Destroys a thread-safe queue and releases all associated resources.
+ * @param p_queue Pointer to the queue object to destroy.
+ */
+static inline void ts_queue_destroy(ts_queue_t *p_queue);
+
+/**
+ * @brief Enqueues an item into the queue.
+ * @param p_queue Pointer to the queue object.
+ * @param p_item Pointer to the item to enqueue.
+ * @param wait_ms Timeout in milliseconds if the queue is full.
+ * @return true if the item was successfully enqueued, false on timeout or error.
+ */
+static inline bool ts_queue_enqueue(ts_queue_t *p_queue, void *p_item, uint32_t wait_ms);
+
+/**
+ * @brief Dequeues an item from the queue.
+ * @param p_queue Pointer to the queue object.
+ * @param pp_item Pointer to store the dequeued item.
+ * @param wait_ms Timeout in milliseconds if the queue is empty.
+ * @return true if an item was successfully dequeued, false on timeout or error.
+ */
+static inline bool ts_queue_dequeue(ts_queue_t *p_queue, void **pp_item, uint32_t wait_ms);
+
+#endif // CUTILS_TS_QUEUE_H

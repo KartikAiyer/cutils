@@ -25,38 +25,130 @@
 #pragma once
 
 #include <cutils/os_types.h>
+#include <cutils/logger.h>
 #include <pthread.h>
+#include <errno.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef enum _event_flag_wait_type_e {
-  WAIT_OR,
-  WAIT_OR_CLEAR,
-  WAIT_AND,
-  WAIT_AND_CLEAR
-} event_flag_wait_type_e;
-
+/**
+ * @brief The representation of an event flag object on the pthread port.
+ * 
+ * @note The number of available flag bits depends on the underlying platform's 
+ *       implementation (typically 32 bits on POSIX, but may be restricted on others).
+ */
 typedef struct _event_flag_t {
   pthread_cond_t cv;
   pthread_mutex_t mtx;
   uint32_t val;
 } event_flag_t;
 
-bool event_flag_new(event_flag_t *p_flags);
+static inline bool event_flag_new(event_flag_t *p_flags) {
+  bool retval = false;
+  if (p_flags && !pthread_mutex_init(&p_flags->mtx, 0) && !pthread_cond_init(&p_flags->cv, 0)) {
+    p_flags->val = 0;
+    retval = true;
+  }
+  return retval;
+}
 
-bool event_flag_free(event_flag_t *p_flags);
+static inline bool event_flag_free(event_flag_t *p_flags) {
+  return (p_flags && !pthread_cond_destroy(&p_flags->cv) && !pthread_mutex_destroy(&p_flags->mtx));
+}
 
-bool event_flag_wait(event_flag_t *p_flags,
-                     uint32_t required_flags,
-                     event_flag_wait_type_e wait_type,
-                     uint32_t *p_actual_flags,
-                     uint32_t wait_ms);
+static inline bool check_flags(event_flag_t *p_flags,
+                               uint32_t required_flags,
+                               event_flag_wait_type_e wait_type,
+                               uint32_t *p_actual_flags) {
+  bool retval = false;
+  uint32_t act_flags = p_flags->val & required_flags;
+  if (wait_type == WAIT_OR || wait_type == WAIT_OR_CLEAR) {
+    if (act_flags) {
+      if (p_actual_flags)
+        *p_actual_flags = act_flags;
+      retval = true;
+    }
+  } else {
+    if (act_flags == required_flags) {
+      if (p_actual_flags)
+        *p_actual_flags = act_flags;
+      retval = true;
+    }
+  }
+  if (retval && (wait_type == WAIT_AND_CLEAR || wait_type == WAIT_OR_CLEAR)) {
+    p_flags->val &= ~act_flags;
+  }
+  return retval;
+}
 
-bool event_flag_send(event_flag_t *p_flags, uint32_t flag_bits);
+static inline bool event_flag_wait(event_flag_t *p_flags,
+                                   uint32_t required_flags,
+                                   event_flag_wait_type_e wait_type,
+                                   uint32_t *p_actual_flags,
+                                   uint32_t wait_ms) {
+  bool retval = false;
+  struct timespec ts = {0};
 
-bool event_flag_clear(event_flag_t *p_flags, uint32_t flag_bits);
+  if (p_flags) {
+    if (wait_ms != WAIT_FOREVER) {
+      clock_gettime(CLOCK_REALTIME, &ts);
+      ts.tv_sec += wait_ms / 1000;
+      ts.tv_nsec += (wait_ms % 1000) * 1000000;
+    }
+    int rval = 0;
+    if (wait_ms == NO_SLEEP) {
+      rval = pthread_mutex_trylock(&p_flags->mtx);
+    } else {
+      rval = pthread_mutex_timedlock(&p_flags->mtx, &ts);
+    }
+    CHECK_RETURNF(!rval, false, "Failed to acquire mutex, errno = %d", rval);
+    while (!check_flags(p_flags, required_flags, wait_type, p_actual_flags)) {
+      if (wait_ms != WAIT_FOREVER) {
+        clock_gettime(CLOCK_REALTIME, &ts);
+        ts.tv_sec += wait_ms / 1000;
+        ts.tv_nsec += (wait_ms % 1000) * 1000000;
+        rval = pthread_cond_timedwait(&p_flags->cv, &p_flags->mtx, &ts);
+      } else {
+        rval = pthread_cond_wait(&p_flags->cv, &p_flags->mtx);
+      }
+      CHECK_RUN(!rval || (rval != ETIMEDOUT && rval != EINVAL && rval != EPERM),
+                pthread_mutex_unlock(&p_flags->mtx);
+                return retval;
+                , "Condition Variable wait failed due to error: %d", rval);
+      if (rval) {
+        break;
+      }
+    }
+    pthread_mutex_unlock(&p_flags->mtx);
+    retval = true;
+  }
+  return retval;
+}
+
+static inline bool event_flag_send(event_flag_t *p_flags, uint32_t flag_bits) {
+  bool retval = false;
+  if (p_flags) {
+    pthread_mutex_lock(&p_flags->mtx);
+    p_flags->val |= flag_bits;
+    pthread_cond_broadcast(&p_flags->cv);
+    pthread_mutex_unlock(&p_flags->mtx);
+    retval = true;
+  }
+  return retval;
+}
+
+static inline bool event_flag_clear(event_flag_t *p_flags, uint32_t flag_bits) {
+  bool retval = false;
+  if (p_flags) {
+    pthread_mutex_lock(&p_flags->mtx);
+    p_flags->val &= ~(flag_bits);
+    pthread_mutex_unlock(&p_flags->mtx);
+    retval = true;
+  }
+  return retval;
+}
 
 #ifdef __cplusplus
 }

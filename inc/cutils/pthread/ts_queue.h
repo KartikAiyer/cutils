@@ -32,6 +32,9 @@
 extern "C" {
 #endif
 
+/**
+ * @brief The internal representation of a thread-safe queue on the pthread port.
+ */
 typedef struct {
   pthread_cond_t cnd;
   pthread_cond_t full_cnd;
@@ -43,8 +46,13 @@ typedef struct {
   atomic_ulong tail;
 } ts_queue_t;
 
+/** @name Static Queue Storage Macros
+ *  These macros facilitate static allocation of the queue's internal array and control block.
+ *  @{ */
 #define TS_QUEUE_STORE(name) _ts_queue_store_##name
 #define TS_QUEUE_STORE_T(name) _ts_queue_store_##name##_t
+
+/** @brief Declares a structure that holds the queue array and its metadata. */
 #define TS_QUEUE_STORE_DECL(name, size)                                                            \
   static size_t _ts_queue_store_num_elements_##name = size;                                        \
   typedef struct {                                                                                 \
@@ -52,14 +60,20 @@ typedef struct {
     ts_queue_t queue;                                                                              \
   } TS_QUEUE_STORE_T(name)
 
+/** @brief Defines the static storage for the queue. */
 #define TS_QUEUE_STORE_DEF(name) static TS_QUEUE_STORE_T(name) TS_QUEUE_STORE(name)
+/** @} */
 
+/**
+ * @brief Parameters used to initialize a thread-safe queue.
+ */
 typedef struct {
   ts_queue_t *p_queue;
   void **ptr_array;
   size_t size;
 } ts_queue_create_params_t;
 
+/** @brief Helper to populate create parameters from a named static store. */
 #define TS_QUEUE_STORE_CREATE_PARAMS_INIT(params, name)                                            \
   memset(&(params), 0, sizeof((params)));                                                          \
   (params).p_queue = &TS_QUEUE_STORE(name).queue;                                                  \

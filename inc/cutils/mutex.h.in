@@ -27,4 +27,33 @@
 #include <cutils/Version.h>
 #include <cutils/@CUTILS_PLATFORM_TYPE@/mutex.h>
 
-#endif //CUTILS_MUTEX_H
+/**
+ * @brief Initializes a new mutex object.
+ * @param mutex Pointer to the mutex structure to initialize.
+ * @return true if initialization was successful, false otherwise.
+ */
+static inline bool mutex_new(mutex_t *mutex);
+
+/**
+ * @brief Destroys a mutex object and releases its internal resources.
+ * @param mutex Pointer to the mutex structure to free.
+ */
+static inline void mutex_free(mutex_t *mutex);
+
+/**
+ * @brief Acquires the mutex lock.
+ * @param mutex Pointer to the mutex object.
+ * @param wait_ms Timeout in milliseconds to wait for the lock. Use 0 for non-blocking
+ *                or specific constants for infinite wait.
+ * @return true if the lock was acquired, false on timeout or error.
+ */
+static inline bool mutex_lock(mutex_t *mutex, uint32_t wait_ms);
+
+/**
+ * @brief Releases the mutex lock.
+ * @param mutex Pointer to the mutex object.
+ * @return true if successful, false otherwise.
+ */
+static inline bool mutex_unlock(mutex_t *mutex);
+
+#endif // CUTILS_MUTEX_H

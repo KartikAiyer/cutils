@@ -30,7 +30,10 @@
 extern "C" {
 #endif
 
-#define CUTILS_TASK_PRIORITY_LOWEST (sched_get_priority_min(SCHEDULING_POLICY))
+/** @name Task Priority Levels
+ *  These macros define the priority range for tasks on this port.
+ *  @{ */
+#define CUTILS_TASK_PRIORITY_LOWEST  (sched_get_priority_min(SCHEDULING_POLICY))
 #define CUTILS_TASK_PRIORITY_HIGHEST (sched_get_priority_max(SCHEDULING_POLICY))
 #define CUTILS_TASK_PRIORITY_MEDIUM                                                                \
   ((CUTILS_TASK_PRIORITY_LOWEST + CUTILS_TASK_PRIORITY_HIGHEST) / 2)
@@ -38,22 +41,30 @@ extern "C" {
   (CUTILS_TASK_PRIORITY_MEDIUM - ((CUTILS_TASK_PRIORITY_HIGHEST - CUTILS_TASK_PRIORITY_LOWEST) / 4))
 #define CUTILS_TASK_PRIORITY_MID_LO                                                                \
   (CUTILS_TASK_PRIORITY_MEDIUM + ((CUTILS_TASK_PRIORITY_HIGHEST - CUTILS_TASK_PRIORITY_LOWEST) / 4))
+/** @} */
 
 #define CUTILS_TASK_STACK_MIN_SIZE (PTHREAD_STACK_MIN)
-#define DEFAULT_TASK_PRIORITY CUTILS_TASK_PRIORITY_MEDIUM
+#define DEFAULT_TASK_PRIORITY      CUTILS_TASK_PRIORITY_MEDIUM
 
 /**
- * @brief Prototype for task_t function callbcak
+ * @brief Function signature for task entry points.
  */
 typedef void (*task_func_t)(void *);
 
+/**
+ * @brief The internal representation of a task on the C11 threads port.
+ */
 typedef struct _task_t {
   thrd_t task;
   char label[30];
   task_func_t func;
   void *ctx;
+  uint32_t sanity;
 } task_t;
 
+/**
+ * @brief Parameters used to initialize a task.
+ */
 typedef struct _task_create_params_t {
   task_t *task;
   char *label;
@@ -64,19 +75,29 @@ typedef struct _task_create_params_t {
   uint32_t stack_size;
 } task_create_params_t;
 
+/**
+ * @name Static Task Storage Macros
+ *  These macros provide a mechanism for statically allocating tasks and their stacks.
+ *  @{ */
 #define TASK_STATIC_STORE_T(name) task_static_store_##name##_t
 
-#define TASK_STATIC_STORE(name) _task_store_##name
+/** @brief The symbol name for the static store of a given task name. */
+#define TASK_STATIC_STORE(name)   _task_store_##name
 
+/** 
+ * @brief Declares a structure that holds both the stack and the task control block.
+ */
 #define TASK_STATIC_STORE_DECL(name, stack_size)                                                   \
   typedef struct {                                                                                 \
     uint8_t stack[(stack_size)];                                                                   \
     task_t tsk;                                                                                    \
   } TASK_STATIC_STORE_T(name)
 
+/** @brief Defines the static store in a special section to persist across soft resets if supported. */
 #define TASK_STATIC_STORE_DEF(name)                                                                \
   TASK_STATIC_STORE_T(name) TASK_STATIC_STORE(name) __attribute__((section(".bss.noinit"), used))
 
+/** @brief Internal helper to map a static store to task create parameters. */
 #define TASK_INIT_CREATE_PARAMS_FROM_STORE(params, store_ptr, lbl, pri, fn, context)               \
   memset(&(params), 0, sizeof((params)));                                                          \
   (params).task = &(store_ptr)->tsk;                                                               \
@@ -87,8 +108,10 @@ typedef struct _task_create_params_t {
   (params).stack = (store_ptr)->stack;                                                             \
   (params).stack_size = sizeof((store_ptr)->stack)
 
+/** @brief Public macro to initialize create parameters from a named static store. */
 #define TASK_STATIC_INIT_CREATE_PARAMS(params, name, lbl, pri, fn, context)                        \
   TASK_INIT_CREATE_PARAMS_FROM_STORE(params, &TASK_STATIC_STORE(name), lbl, pri, fn, context)
+/** @} */
 
 task_t *task_new_static(task_create_params_t *create_params);
 

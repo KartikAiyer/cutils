@@ -24,11 +24,17 @@
 
 #include <cutils/logger.h>
 #include <cutils/task.h>
+#include <time.h>
 #include <string.h>
+
+#define TASK_SANITY (0xDEADBEEF)
+static _Thread_local task_t *s_current_task = NULL;
 
 static int thread_runner_f(void *ctx) {
   task_t *p_task = (task_t *)ctx;
+  s_current_task = p_task;
   p_task->func(p_task->ctx);
+  s_current_task = NULL;
   return 0;
 }
 
@@ -50,6 +56,7 @@ task_t *task_new_static(task_create_params_t *create_params) {
 
     strncpy(
         create_params->task->label, create_params->label, sizeof(create_params->task->label) - 1);
+    create_params->task->sanity = TASK_SANITY;
     // TODO: Add an assertion
     retval = (r == 0) ? create_params->task : 0;
   }
@@ -76,5 +83,10 @@ void task_sleep(uint32_t ms) {
 }
 
 void task_get_current_name(char *name, size_t string_len) {
-  pthread_getname_np(thrd_current(), name, string_len);
+  task_t *current = s_current_task;
+  if (current && current->sanity == TASK_SANITY) {
+    strncpy(name, current->label, string_len);
+  } else {
+    strncpy(name, "unknown", string_len);
+  }
 }
