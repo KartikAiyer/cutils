@@ -25,6 +25,59 @@
 #ifndef CUTILS_EVENT_FLAG_H
 #define CUTILS_EVENT_FLAG_H
 
+/**
+ * @brief Specifies the behavior of the event flag wait operation.
+ */
+typedef enum _event_flag_wait_type_e {
+  WAIT_OR,         /**< Wake up if any of the requested flags are set. */
+  WAIT_OR_CLEAR,   /**< Wake up if any requested flags are set, and then clear those flags. */
+  WAIT_AND,        /**< Wake up only if all requested flags are set. */
+  WAIT_AND_CLEAR   /**< Wake up only if all requested flags are set, and then clear them. */
+} event_flag_wait_type_e;
+
 #include <cutils/@CUTILS_PLATFORM_TYPE@/event_flag.h>
 
-#endif //CUTILS_EVENT_FLAG_H
+/**
+ * @brief Initializes a new event flag object.
+ * @param p_flags Pointer to the event flag structure to initialize.
+ * @return true if initialization was successful, false otherwise.
+ */
+static inline bool event_flag_new(event_flag_t *p_flags);
+
+/**
+ * @brief Destroys an event flag object and releases its internal resources.
+ * @param flags Pointer to the event flag structure to free.
+ * @return true if destruction was successful, false otherwise.
+ */
+static inline bool event_flag_free(event_flag_t *flags);
+
+/**
+ * @brief Blocks until one or more event flags are set based on a specified wait type.
+ * @param p_flags Pointer to the event flag object.
+ * @param required_flags Bitmask of flags to wait for.
+ * @param wait_type Type of wait (e.g., WAIT_OR, WAIT_AND).
+ * @param p_actual_flags Optional pointer to store the flags that triggered the wakeup.
+ * @param wait_ms Timeout in milliseconds. Use WAIT_FOREVER or NO_SLEEP constants.
+ * @return true if the condition was met, false on timeout or error.
+ */
+static inline bool event_flag_wait(event_flag_t *p_flags, uint32_t required_flags, 
+                                   event_flag_wait_type_e wait_type, uint32_t *p_actual_flags, 
+                                   uint32_t wait_ms);
+
+/**
+ * @brief Sets one or more bits in the event flag.
+ * @param p_flags Pointer to the event flag object.
+ * @param flag_bits Bitmask of flags to set.
+ * @return true if successful, false otherwise.
+ */
+static inline bool event_flag_send(event_flag_t *p_flags, uint32_t flag_bits);
+
+/**
+ * @brief Clears one or more bits in the event flag.
+ * @param p_flags Pointer to the event flag object.
+ * @param flag_bits Bitmask of flags to clear.
+ * @return true if successful, false otherwise.
+ */
+static inline bool event_flag_clear(event_flag_t *p_flags, uint32_t flag_bits);
+
+#endif // CUTILS_EVENT_FLAG_H

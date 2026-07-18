@@ -28,4 +28,51 @@
 #include <cutils/Version.h>
 #include <cutils/@CUTILS_PLATFORM_TYPE@/task.h>
 
-#endif //CUTILS_TASK_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * @brief Initializes a task using statically allocated buffers.
+ * @param create_params Parameters for creating the task, including labels and stack details.
+ * @return Pointer to the initialized task object, or NULL on failure.
+ */
+task_t *task_new_static(task_create_params_t *create_params);
+
+/**
+ * @brief Starts the execution of a task.
+ * @param task Pointer to the initialized task object.
+ * @return true if the task started successfully, false otherwise.
+ */
+bool task_start(task_t *task);
+
+/**
+ * @brief Cleans up resources for a statically allocated task.
+ * @param task Pointer to the task object to destroy.
+ */
+void task_destroy_static(task_t *task);
+
+/**
+ * @brief Retrieves the current system tick count.
+ * @return The number of ticks since system start.
+ */
+uint64_t task_get_ticks(void);
+
+/**
+ * @brief Puts the currently running task to sleep.
+ * @param ms Number of milliseconds to sleep.
+ */
+void task_sleep(uint32_t ms);
+
+/**
+ * @brief Retrieves the name of the current task.
+ * @param name Buffer to store the task name.
+ * @param string_length Maximum length of the buffer.
+ */
+void task_get_current_name(char *name, size_t string_length);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // CUTILS_TASK_H

@@ -31,21 +31,22 @@
 extern "C" {
 #endif
 
-typedef enum _event_flag_wait_type_e {
-  WAIT_OR,
-  WAIT_OR_CLEAR,
-  WAIT_AND,
-  WAIT_AND_CLEAR
-} event_flag_wait_type_e;
-
+/**
+ * @brief The representation of an event flag object on the FreeRTOS port.
+ * 
+ * @warning FreeRTOS Event Groups have a limitation on the number of bits available.
+ *          Typically, only 24 bits are usable as the upper 8 bits are reserved for
+ *          internal tracking by the kernel.
+ */
 typedef struct _event_flag_t {
   StaticEventGroup_t control_block;
   EventGroupHandle_t handle;
 } event_flag_t;
 
-/* FreeRTOS reserves the upper 8 bits of EventBits_t for internal control
- * (tracking blocked tasks). Mask all flag arguments to the 24 usable bits so
- * callers passing 0xFFFFFFFF ("all flags") don't trip configASSERT. */
+/** 
+ * @brief Mask used to ensure only usable FreeRTOS event bits are passed to API calls.
+ *        Prevents triggering configASSERT when passing full 32-bit masks.
+ */
 #define EVENT_FLAG_VALID_BITS 0x00FFFFFFU
 
 static inline bool event_flag_new(event_flag_t *flags) {
