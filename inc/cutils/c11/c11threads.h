@@ -52,7 +52,6 @@ typedef pthread_t thrd_t;
 typedef pthread_mutex_t mtx_t;
 typedef pthread_cond_t cnd_t;
 typedef pthread_key_t tss_t;
-typedef pthread_once_t once_flag;
 
 typedef int (*thrd_start_t)(void *);
 typedef void (*tss_dtor_t)(void *);
@@ -269,8 +268,6 @@ static inline int tss_set(tss_t key, void *val) {
 static inline void *tss_get(tss_t key) { return pthread_getspecific(key); }
 
 /* ---- misc ---- */
-
-static inline void call_once(once_flag *flag, void (*func)(void)) { pthread_once(flag, func); }
 
 #if 0  //__STDC_VERSION__ < 201112L || defined(C11THREADS_NO_TIMED_MUTEX)
 /* TODO take base into account */
