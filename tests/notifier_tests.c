@@ -84,6 +84,7 @@ static posted_counts_t s_count_array[NOTIFIER_TEST_MAX_CATS];
 static test_notification_t *s_posted_array[NOTIFIER_TEST_MAX_POSTS];
 
 static void test_notifier_callback(notifier_block_t *block, uint32_t category, void *notif_data) {
+  (void)block;
   posted_counts_t *count_array = (posted_counts_t *)notif_data;
 
   count_array[category].count++;

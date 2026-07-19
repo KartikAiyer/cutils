@@ -42,6 +42,7 @@ typedef struct {
 } action_data_t;
 
 static void action_1(void *arg1, void *arg2) {
+  (void)arg2;
   action_data_t *p_data = (action_data_t *)arg1;
   task_sleep(p_data->sleep_time);
   p_data->val = 1;
@@ -87,11 +88,13 @@ typedef struct {
 } task_action_test_data_t;
 
 static void lo_action(void *arg1, void *arg2) {
+  (void)arg2;
   task_action_test_data_t *p_data = (task_action_test_data_t *)arg1;
   p_data->val--;
 }
 
 static void hi_action(void *arg1, void *arg2) {
+  (void)arg2;
   task_action_test_data_t *p_data = (task_action_test_data_t *)arg1;
 
   TEST_ASSERT(p_data);
@@ -100,6 +103,7 @@ static void hi_action(void *arg1, void *arg2) {
 }
 
 static void medium_action(void *arg1, void *arg2) {
+  (void)arg2;
   task_action_test_data_t *p_data = (task_action_test_data_t *)arg1;
 
   TEST_ASSERT(p_data);
