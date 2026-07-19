@@ -30,6 +30,14 @@
 extern "C" {
 #endif
 
+/**
+ * @brief cutils-level ticks type, defined per port to its native tick width.
+ * On RTOS ports this may be 32-bit (per FreeRTOS configTICK_TYPE_WIDTH_IN_BITS);
+ * code computing deltas or storing ticks should use cutils_ticks_t directly
+ * and not assume uint64_t. Host portable ports typically resolve to uint64_t via clock_gettime.
+ */
+typedef uint64_t cutils_ticks_t;
+
 /** @name Task Priority Levels
  *  These macros define the priority range for tasks on this port.
  *  @{ */
@@ -118,8 +126,6 @@ task_t *task_new_static(task_create_params_t *create_params);
 bool task_start(task_t *task);
 
 void task_destroy_static(task_t *task);
-
-uint64_t task_get_ticks(void);
 
 void task_sleep(uint32_t ms);
 

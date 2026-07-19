@@ -54,6 +54,14 @@ extern "C" {
 typedef void (*task_func_t)(void *);
 
 /**
+ * @brief cutils-level ticks type, defined per port to its native tick width.
+ * On RTOS ports this may be 32-bit — code computing deltas or storing ticks
+ * should use cutils_ticks_t directly and not assume uint64_t. Host pthread
+ * (and other portable hosts) typically resolves to uint64_t via clock_gettime.
+ */
+typedef uint64_t cutils_ticks_t;
+
+/**
  * @brief The internal representation of a task on the pthread port.
  */
 typedef struct _task_t {

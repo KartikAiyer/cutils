@@ -41,12 +41,12 @@ void task_destroy_static(task_t *task) {
   }
 }
 
-uint64_t task_get_ticks(void) {
-  /* xTaskGetTickCount() returns TickType_t (uint32_t with our 32-bit tick
-   * config). Widening to uint64_t is exact but the underlying counter rolls
-   * over every ~49.7 days at 1 kHz; a 64-bit overflow-tracking wrapper can be
-   * added later if a test needs longer uptimes. */
-  return (uint64_t)xTaskGetTickCount();
+cutils_ticks_t task_get_ticks(void) {
+  /* xTaskGetTickCount() returns TickType_t; with configTICK_TYPE_WIDTH_IN_BITS=32
+   * returning it as cutils_ticks_t (TickType_t here) is lossless, but the counter
+   * still wraps every ~49.7 days at 1 kHz -- callers should be aware of tick
+   * width if computing deltas over long uptimes. */
+  return xTaskGetTickCount();
 }
 
 void task_sleep(uint32_t ms) {
