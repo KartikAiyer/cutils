@@ -35,7 +35,19 @@
 #include <time.h>
 
 #define ONCE_FLAG_INIT PTHREAD_ONCE_INIT
-#define SCHEDULING_POLICY (SCHED_OTHER)
+
+/* Scheduling policy for the c11 port (which calls into pthread underneath).
+ * Configurable at CMake time via CUTILS_PTHREAD_SCHED_POLICY (default
+ * SCHED_OTHER). Same priority-abstraction contract as the pthread port: under
+ * SCHED_OTHER the CUTILS_TASK_PRIORITY_* range is 0..0, .priority is a no-op
+ * and thrd_create_ex() inherits the parent's scheduling (host/CI, runs
+ * unprivileged); under SCHED_FIFO/SCHED_RR priorities are real (1..99) via
+ * PTHREAD_EXPLICIT_SCHED, which requires CAP_SYS_NICE on Linux — intended for
+ * the embedded-Linux production target. See issue #22. */
+#ifndef CUTILS_PTHREAD_SCHED_POLICY
+#define CUTILS_PTHREAD_SCHED_POLICY SCHED_OTHER
+#endif
+#define SCHEDULING_POLICY (CUTILS_PTHREAD_SCHED_POLICY)
 
 #ifdef __APPLE__
 /* Darwin doesn't implement timed mutexes currently */
@@ -91,6 +103,12 @@ static inline int thrd_create_ex(thrd_t *thr,
 
   int rval = pthread_attr_getstacksize(&attr, &min_stack_size);
   CHECK_RUN(!rval, pthread_attr_destroy(&attr); return rval, "Failed to query minimum stack size");
+  /* Only real-time policies expose a non-trivial priority range; gate
+   * PTHREAD_EXPLICIT_SCHED on SCHED_FIFO/SCHED_RR (needs CAP_SYS_NICE on
+   * Linux). Under the default SCHED_OTHER, .priority is a no-op and we inherit
+   * the parent's scheduling so the build runs unprivileged. See issue #22. */
+#if CUTILS_PTHREAD_SCHED_POLICY == SCHED_FIFO || \
+    CUTILS_PTHREAD_SCHED_POLICY == SCHED_RR
   rval = pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
   CHECK_RUN(!rval, pthread_attr_destroy(&attr); return rval, "Failed to set scheduling parameter");
   rval = pthread_attr_setschedpolicy(&attr, SCHEDULING_POLICY);
@@ -99,6 +117,12 @@ static inline int thrd_create_ex(thrd_t *thr,
   rval = pthread_attr_setschedparam(&attr, &param);
   CHECK_RUN(!rval, pthread_attr_destroy(&attr);
             return rval, "Failed to set priority to %d", param.sched_priority);
+#else
+  /* SCHED_OTHER: priority range is 0..0, so .priority is a no-op. Inherit the
+   * creating thread's scheduling to avoid the CAP_SYS_NICE requirement. */
+  rval = pthread_attr_setinheritsched(&attr, PTHREAD_INHERIT_SCHED);
+  CHECK_RUN(!rval, pthread_attr_destroy(&attr); return rval, "Failed to set inherit scheduling");
+#endif
   if (stack && stack_size >= min_stack_size) {
     rval = pthread_attr_setstackaddr(&attr, stack);
     CHECK_RUN(!rval, pthread_attr_destroy(&attr);

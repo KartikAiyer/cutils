@@ -31,6 +31,7 @@ platform flavor with Debug/Release splits, and always emits
 | ------------------- | -------- | ------------------------------------------------------------------------------ |
 | `pthread-debug`     | pthread  | host (Linux/macOS), runs under ctest                                          |
 | `pthread-release`   | pthread  | host, optimized                                                              |
+| `pthread-rt-debug`  | pthread  | real-time (`SCHED_RR`); needs `CAP_SYS_NICE` — production embedded-Linux target |
 | `c11-debug`         | c11      | host C11 threads (calls into pthread)                                        |
 | `c11-release`       | c11      | host, optimized                                                             |
 | `freertos-debug`    | freertos | M7 QEMU (`mps2-an500`) cross-build; needs arm-none-eabi toolchain + `qemu-system-arm` |
@@ -52,6 +53,39 @@ Build dirs land under `build/<preset-name>/`. `CMAKE_EXPORT_COMPILE_COMMANDS`
 is set in `CMakeLists.txt`, so `compile_commands.json` is generated in each
 build dir for Make/Ninja generators (it is gitignored). Keep personal overrides
 in `CMakeUserPresets.json` (gitignored, not committed).
+
+### Scheduling policy & task priorities
+
+The pthread/c11 ports select their POSIX scheduling policy via the
+`CUTILS_PTHREAD_SCHED_POLICY` cache variable (default `SCHED_OTHER`). This
+single knob drives both the `CUTILS_TASK_PRIORITY_*` range and whether
+`task_new_static()` takes explicit control of thread scheduling:
+
+| policy        | priority range | `.priority` honored? | requires privilege?            |
+| ------------- | -------------- | ------------------- | ------------------------------ |
+| `SCHED_OTHER` | 0..0           | no (no-op)          | no — host/CI default           |
+| `SCHED_FIFO`  | 1..99          | yes                 | yes (`CAP_SYS_NICE` on Linux)  |
+| `SCHED_RR`    | 1..99          | yes                 | yes (`CAP_SYS_NICE` on Linux)  |
+
+- Under `SCHED_OTHER` (the default, used by `pthread-debug`/`c11-debug`),
+  `sched_get_priority_{min,max}` are both `0`, so every `CUTILS_TASK_PRIORITY_*`
+  collapses to `0` and `task_create_params_t::priority` is silently ignored.
+  `task_new_static()` uses `PTHREAD_INHERIT_SCHED`, so the build runs
+  unprivileged. The abstraction here is a host convenience, not a real
+  scheduler — this is what keeps the host `ctest` suites green without root.
+- Under `SCHED_FIFO`/`SCHED_RR` (e.g. the `pthread-rt-debug` preset),
+  priorities are real and `.priority` is applied via `PTHREAD_EXPLICIT_SCHED`,
+  which on Linux requires `CAP_SYS_NICE`. Intended for the embedded-Linux
+  (e.g. PREEMPT_RT) production target; `pthread_create()` returns `EPERM`
+  without the capability.
+- The FreeRTOS port is where priorities are fully real with no privilege
+  requirement.
+
+Override at configure time, e.g.:
+
+```
+cmake --preset pthread-debug -DCUTILS_PTHREAD_SCHED_POLICY=SCHED_FIFO
+```
 
 ### Docs
 

@@ -24,7 +24,6 @@
 
 #include <cutils/logger.h>
 #include <cutils/task.h>
-#include <errno.h>
 #include <pthread.h>
 #include <string.h>
 
@@ -57,10 +56,13 @@ task_t *task_new_static(task_create_params_t *create_params) {
     int rval = pthread_attr_getstacksize(&attr, &min_stack_size);
     CHECK_RUN(!rval, pthread_attr_destroy(&attr);
               return retval, "Failed to query minimum stack size");
-    /* Explicit scheduling (policy + priority) requires CAP_SYS_NICE on Linux.
-     * Unprivileged callers will see pthread_create() fail with EPERM below; we
-     * then retry once with PTHREAD_INHERIT_SCHED, which for SCHED_OTHER yields
-     * the same prio-0 thread the explicit path would have produced. */
+    /* Only real-time policies (SCHED_FIFO/SCHED_RR) expose a non-trivial
+     * priority range, so only they take explicit control of thread scheduling.
+     * On Linux that requires CAP_SYS_NICE; under the default SCHED_OTHER there
+     * is no range (0..0), .priority is a no-op, and we inherit the parent's
+     * scheduling so the build runs unprivileged. See issue #22. */
+#if CUTILS_PTHREAD_SCHED_POLICY == SCHED_FIFO || \
+    CUTILS_PTHREAD_SCHED_POLICY == SCHED_RR
     rval = pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
     CHECK_RUN(!rval, pthread_attr_destroy(&attr);
               return retval, "Failed to set scheduling parameter");
@@ -70,6 +72,13 @@ task_t *task_new_static(task_create_params_t *create_params) {
     rval = pthread_attr_setschedparam(&attr, &param);
     CHECK_RUN(!rval, pthread_attr_destroy(&attr);
               return retval, "Failed to set priority to %d", param.sched_priority);
+#else
+    /* SCHED_OTHER: priority range is 0..0, so .priority is a no-op. Inherit
+     * the creating thread's scheduling to avoid the CAP_SYS_NICE requirement. */
+    rval = pthread_attr_setinheritsched(&attr, PTHREAD_INHERIT_SCHED);
+    CHECK_RUN(!rval, pthread_attr_destroy(&attr);
+              return retval, "Failed to set inherit scheduling");
+#endif
     if (create_params->stack && create_params->stack_size >= min_stack_size) {
       rval = pthread_attr_setstack(&attr, create_params->stack, create_params->stack_size);
       CHECK_RUN(!rval, pthread_attr_destroy(&attr);
@@ -80,19 +89,6 @@ task_t *task_new_static(task_create_params_t *create_params) {
     create_params->task->func = create_params->func;
 
     int res = pthread_create(&create_params->task->task, &attr, task_runner, create_params->task);
-    if (res == EPERM) {
-      /* PTHREAD_EXPLICIT_SCHED needs CAP_SYS_NICE. Fall back to the platform
-       * default scheduling (inherited from the creating thread). */
-      CLOG("task_new_static: pthread_create returned EPERM under PTHREAD_EXPLICIT_SCHED for "
-           "'%s'; retrying with PTHREAD_INHERIT_SCHED",
-           create_params->label ? create_params->label : "(null)");
-      pthread_attr_destroy(&attr);
-      pthread_attr_init(&attr);
-      if (create_params->stack && create_params->stack_size >= min_stack_size) {
-        pthread_attr_setstack(&attr, create_params->stack, create_params->stack_size);
-      }
-      res = pthread_create(&create_params->task->task, &attr, task_runner, create_params->task);
-    }
     pthread_attr_destroy(&attr);
 
     create_params->task->sanity = TASK_SANITY;
