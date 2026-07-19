@@ -8,6 +8,26 @@
 extern void uart0_init(void);
 extern void semihost_exit(int code) __attribute__((noreturn));
 
+/* Stringify the suite accessor selected at compile time
+ * (-DCUTILS_EMBTEST_SUITE=<fn>) for the per-suite runner's label. */
+#define EMBTEST_STR_(s) #s
+#define EMBTEST_STR(s) EMBTEST_STR_(s)
+
+#define RUNNER_STACK_SIZE 2048
+
+static void run_suite(const char *name, TestRef (*get_tests)(void)) {
+  printf("\n[%s] ", name);
+  TestRunner_runTest(get_tests());
+}
+
+#ifndef CUTILS_EMBTEST_SUITE
+/* ---------------------------------------------------------------------------
+ * Aggregate runner: every suite in one QEMU boot. Built when
+ * CUTILS_EMBTEST_SUITE is undefined (the embtest_runner target, opt-in via
+ * CUTILS_FREERTOS_AGGREGATE_RUNNER). Kept for fast "run everything" smoke
+ * tests — it boots QEMU once instead of N times.
+ * ------------------------------------------------------------------------- */
+
 /* Forward declarations — every suite's TestRef accessor */
 extern TestRef klist_get_tests(void);
 extern TestRef mem_ring_buffer_get_tests(void);
@@ -25,13 +45,6 @@ extern TestRef accumulator_get_tests(void);
 extern TestRef dispatch_queue_get_tests(void);
 extern TestRef asyncio_get_tests(void);
 extern TestRef state_event_loop_get_tests(void);
-
-#define RUNNER_STACK_SIZE 2048
-
-static void run_suite(const char *name, TestRef (*get_tests)(void)) {
-  printf("\n[%s] ", name);
-  TestRunner_runTest(get_tests());
-}
 
 static void runner_task(void *arg) {
   (void)arg;
@@ -55,6 +68,25 @@ static void runner_task(void *arg) {
   TestRunner_end();
   semihost_exit(TestRunner_failureCount() ? 1 : 0);
 }
+#else
+/* ---------------------------------------------------------------------------
+ * Per-suite runner: exactly one suite, selected at compile time via
+ * -DCUTILS_EMBTEST_SUITE=<accessor>. Each embtest_<suite> ELF boots QEMU,
+ * runs that one suite, and semihost_exits with pass/fail — giving ctest
+ * first-class per-suite granularity instead of one aggregate result.
+ * ------------------------------------------------------------------------- */
+
+/* The accessor is injected by the build as a function name token. */
+extern TestRef CUTILS_EMBTEST_SUITE(void);
+
+static void runner_task(void *arg) {
+  (void)arg;
+  TestRunner_start();
+  run_suite(EMBTEST_STR(CUTILS_EMBTEST_SUITE), CUTILS_EMBTEST_SUITE);
+  TestRunner_end();
+  semihost_exit(TestRunner_failureCount() ? 1 : 0);
+}
+#endif
 
 TASK_STATIC_STORE_DECL(runner, RUNNER_STACK_SIZE);
 TASK_STATIC_STORE_DEF(runner);
