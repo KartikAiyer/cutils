@@ -65,6 +65,8 @@ uint32_t logger_write_string(logger_t *p_logger,
 
 uint32_t
 SimpleLoggerPrefix(logger_t *p_logger, void *p_private, char *p_string, uint32_t string_size) {
+  (void)p_private;
+  (void)string_size;
   int size = 0;
   simple_logger_t *p_simple = (simple_logger_t *)p_logger;
 
