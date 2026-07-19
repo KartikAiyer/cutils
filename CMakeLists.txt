@@ -38,6 +38,19 @@ set(CUTILS_FREERTOS_SOURCE
 set_property(CACHE CUTILS_FREERTOS_SOURCE PROPERTY STRINGS fetch external)
 set(CUTILS_SUPPORTED_FREERTOS_SOURCE fetch external)
 
+# pthread/c11 scheduling policy. SCHED_OTHER (the default) is the host/CI
+# default: it runs unprivileged but exposes a 0..0 priority range, so
+# CUTILS_TASK_PRIORITY_* collapse to 0 and .priority is a no-op. The real-time
+# policies SCHED_FIFO/SCHED_RR expose a 1..99 range and make .priority real,
+# but on Linux require CAP_SYS_NICE — intended for the embedded-Linux (e.g.
+# PREEMPT_RT) production target, not host dev. See issue #22.
+set(CUTILS_PTHREAD_SCHED_POLICY
+    SCHED_OTHER
+    CACHE STRING "pthread/c11 scheduling policy (SCHED_OTHER | SCHED_FIFO | SCHED_RR)"
+)
+set_property(CACHE CUTILS_PTHREAD_SCHED_POLICY PROPERTY STRINGS SCHED_OTHER SCHED_FIFO SCHED_RR)
+set(CUTILS_SUPPORTED_PTHREAD_SCHED_POLICY SCHED_OTHER SCHED_FIFO SCHED_RR)
+
 # cmake-format: off
 if(NOT CUTILS_PLATFORM_TYPE IN_LIST CUTILS_SUPPORTED_PLATFORM_TYPES)
   message(FATAL_ERROR "CUTILS_PLATFORM_TYPE must be 'pthread' or 'c11' or 'freertos, got '${CUTILS_PLATFORM_TYPE}'")
@@ -64,6 +77,14 @@ if(CUTILS_PLATFORM_TYPE STREQUAL freertos)
     if(NOT DEFINED CUTILS_FREERTOS_PORT)
       message(FATAL_ERROR "You must provide CUTILS_FREERTOS_PORT, see FreeRTOS portable/CMakeLists.txt")
     endif()
+  endif()
+endif()
+
+if(CUTILS_PLATFORM_TYPE STREQUAL pthread OR CUTILS_PLATFORM_TYPE STREQUAL c11)
+  if(NOT CUTILS_PTHREAD_SCHED_POLICY IN_LIST CUTILS_SUPPORTED_PTHREAD_SCHED_POLICY)
+    message(FATAL_ERROR
+            "CUTILS_PTHREAD_SCHED_POLICY must be 'SCHED_OTHER', 'SCHED_FIFO' or 'SCHED_RR',"
+            " got '${CUTILS_PTHREAD_SCHED_POLICY}'")
   endif()
 endif()
 # cmake-format: on
