@@ -101,6 +101,8 @@ typedef struct _ref_count_test_t {
 static ref_count_test_t s_test_data = {0};
 
 static void test_destructor_f(void *mem, void *private) {
+  (void)mem;
+  (void)private;
   TEST_ASSERT_MESSAGE(s_test_data.total_count == 0, "Destructor called before References removed");
   s_test_data.total_count = (uint32_t)-1;
 }
@@ -251,6 +253,7 @@ static void launcher_action(void *ctx) {
 }
 
 static void destructor_fn(void *mem, void *private) {
+  (void)mem;
   pool_retain_test_data_t *p_test_data = (pool_retain_test_data_t *)private;
   p_test_data->result = POOL_RETAIN_TEST_SUCCESS;
 }

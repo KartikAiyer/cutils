@@ -32,6 +32,7 @@ struct test_obj {
 };
 
 static void count_up_f(KListElem *elem, ...) {
+  (void)elem;
   va_list args;
   va_start(args, elem);
   uint32_t *p_count = va_arg(args, uint32_t *);
