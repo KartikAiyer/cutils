@@ -24,6 +24,7 @@
 
 #include <cutils/logger.h>
 #include <cutils/task.h>
+#include <errno.h>
 #include <pthread.h>
 #include <string.h>
 
@@ -56,6 +57,10 @@ task_t *task_new_static(task_create_params_t *create_params) {
     int rval = pthread_attr_getstacksize(&attr, &min_stack_size);
     CHECK_RUN(!rval, pthread_attr_destroy(&attr);
               return retval, "Failed to query minimum stack size");
+    /* Explicit scheduling (policy + priority) requires CAP_SYS_NICE on Linux.
+     * Unprivileged callers will see pthread_create() fail with EPERM below; we
+     * then retry once with PTHREAD_INHERIT_SCHED, which for SCHED_OTHER yields
+     * the same prio-0 thread the explicit path would have produced. */
     rval = pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
     CHECK_RUN(!rval, pthread_attr_destroy(&attr);
               return retval, "Failed to set scheduling parameter");
@@ -70,14 +75,26 @@ task_t *task_new_static(task_create_params_t *create_params) {
       CHECK_RUN(!rval, pthread_attr_destroy(&attr);
                 return retval, "Failed to set stack", create_params->stack);
     }
-    CHECK_RUN(!rval, pthread_attr_destroy(&attr);
-              return retval,
-                     "Failed to set scheduling priority between (%d, %d)",
-                     sched_get_priority_min(SCHEDULING_POLICY),
-                     sched_get_priority_max(SCHEDULING_POLICY));
+
     create_params->task->ctx = create_params->ctx;
     create_params->task->func = create_params->func;
+
     int res = pthread_create(&create_params->task->task, &attr, task_runner, create_params->task);
+    if (res == EPERM) {
+      /* PTHREAD_EXPLICIT_SCHED needs CAP_SYS_NICE. Fall back to the platform
+       * default scheduling (inherited from the creating thread). */
+      CLOG("task_new_static: pthread_create returned EPERM under PTHREAD_EXPLICIT_SCHED for "
+           "'%s'; retrying with PTHREAD_INHERIT_SCHED",
+           create_params->label ? create_params->label : "(null)");
+      pthread_attr_destroy(&attr);
+      pthread_attr_init(&attr);
+      if (create_params->stack && create_params->stack_size >= min_stack_size) {
+        pthread_attr_setstack(&attr, create_params->stack, create_params->stack_size);
+      }
+      res = pthread_create(&create_params->task->task, &attr, task_runner, create_params->task);
+    }
+    pthread_attr_destroy(&attr);
+
     create_params->task->sanity = TASK_SANITY;
     strncpy(
         create_params->task->label, create_params->label, sizeof(create_params->task->label) - 1);
