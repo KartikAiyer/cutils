@@ -21,6 +21,38 @@ cmake -G "Your generator of choice" ..
 
 You can then build the individual targets based on your generator.
 
+### Presets (recommended)
+
+`CMakePresets.json` defines first-class configure/build/test presets for each
+platform flavor with Debug/Release splits, and always emits
+`compile_commands.json` (for clangd/IDE indexing):
+
+| preset              | platform | notes                                                                           |
+| ------------------- | -------- | ------------------------------------------------------------------------------ |
+| `pthread-debug`     | pthread  | host (Linux/macOS), runs under ctest                                          |
+| `pthread-release`   | pthread  | host, optimized                                                              |
+| `c11-debug`         | c11      | host C11 threads (calls into pthread)                                        |
+| `c11-release`       | c11      | host, optimized                                                             |
+| `freertos-debug`    | freertos | M7 QEMU (`mps2-an500`) cross-build; needs arm-none-eabi toolchain + `qemu-system-arm` |
+| `freertos-release`  | freertos | M7 QEMU, optimized                                                          |
+
+```
+# configure + build + test the host pthread flavor
+cmake --preset pthread-debug
+cmake --build --preset pthread-debug
+ctest --preset pthread-debug
+
+# FreeRTOS/M7 QEMU target (cross toolchain + qemu-system-arm on PATH)
+cmake --preset freertos-debug
+cmake --build --preset freertos-debug
+ctest --preset freertos-debug
+```
+
+Build dirs land under `build/<preset-name>/`. `CMAKE_EXPORT_COMPILE_COMMANDS`
+is set in `CMakeLists.txt`, so `compile_commands.json` is generated in each
+build dir for Make/Ninja generators (it is gitignored). Keep personal overrides
+in `CMakeUserPresets.json` (gitignored, not committed).
+
 ### Docs
 
 Look throught the [wiki](https://github.com/KartikAiyer/cutils/wiki) to learn more about how to use the utilities.
