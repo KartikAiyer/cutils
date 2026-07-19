@@ -40,9 +40,9 @@ extern "C" {
 #define CUTILS_TASK_PRIORITY_MEDIUM                                                                \
   ((CUTILS_TASK_PRIORITY_LOWEST + CUTILS_TASK_PRIORITY_HIGHEST) / 2)
 #define CUTILS_TASK_PRIORITY_MID_HIGH                                                              \
-  (CUTILS_TASK_PRIORITY_MEDIUM - ((CUTILS_TASK_PRIORITY_HIGHEST - CUTILS_TASK_PRIORITY_LOWEST) / 4))
-#define CUTILS_TASK_PRIORITY_MID_LO                                                                \
   (CUTILS_TASK_PRIORITY_MEDIUM + ((CUTILS_TASK_PRIORITY_HIGHEST - CUTILS_TASK_PRIORITY_LOWEST) / 4))
+#define CUTILS_TASK_PRIORITY_MID_LO                                                                \
+  (CUTILS_TASK_PRIORITY_MEDIUM - ((CUTILS_TASK_PRIORITY_HIGHEST - CUTILS_TASK_PRIORITY_LOWEST) / 4))
 /** @} */
 
 #define CUTILS_TASK_STACK_MIN_SIZE (PTHREAD_STACK_MIN)
