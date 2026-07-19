@@ -25,12 +25,21 @@
 
 #include <FreeRTOS.h>
 #include <cutils/os_types.h>
+
 #include <stdalign.h>
 #include <task.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * @brief cutils-level ticks type, defined per port to its native tick width.
+ * On RTOS ports this may be 32-bit (per FreeRTOS configTICK_TYPE_WIDTH_IN_BITS);
+ * code computing deltas or storing ticks should use cutils_ticks_t directly
+ * and not assume uint64_t. Host portable ports typically resolve to uint64_t.
+ */
+typedef TickType_t cutils_ticks_t;
 
 /** @name Task Priority Levels
  *  These macros define the priority range for tasks on this port.

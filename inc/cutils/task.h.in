@@ -56,7 +56,7 @@ void task_destroy_static(task_t *task);
  * @brief Retrieves the current system tick count.
  * @return The number of ticks since system start.
  */
-uint64_t task_get_ticks(void);
+cutils_ticks_t task_get_ticks(void);
 
 /**
  * @brief Puts the currently running task to sleep.
