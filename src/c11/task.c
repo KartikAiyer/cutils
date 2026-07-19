@@ -71,7 +71,7 @@ void task_destroy_static(task_t *task) {
 }
 bool task_start(task_t *task) { return true; }
 
-uint64_t task_get_ticks(void) {
+cutils_ticks_t task_get_ticks(void) {
   struct timespec res = {0};
   clock_gettime(CLOCK_REALTIME, &res);
   return res.tv_sec * 1000000000 + res.tv_nsec;
