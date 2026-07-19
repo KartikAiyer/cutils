@@ -121,16 +121,6 @@ typedef struct _task_create_params_t {
   TASK_INIT_CREATE_PARAMS_FROM_STORE(params, &TASK_STATIC_STORE(name), lbl, pri, fn, context)
 /** @} */
 
-task_t *task_new_static(task_create_params_t *create_params);
-
-bool task_start(task_t *task);
-
-void task_destroy_static(task_t *task);
-
-void task_sleep(uint32_t ms);
-
-void task_get_current_name(char *name, size_t string_length);
-
 #ifdef __cplusplus
 };
 #endif
