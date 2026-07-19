@@ -34,6 +34,8 @@
 #define SM_DEFAULT_LOGGING (true)
 
 static uint32_t StateMachinePrefix(logger_t *logger, void *priv, char *str, uint32_t str_size) {
+  (void)logger;
+  (void)str_size;
   uint32_t retval = 0;
   state_machine_t *state_mac = (state_machine_t *)priv;
 

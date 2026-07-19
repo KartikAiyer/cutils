@@ -39,6 +39,7 @@ static void *task_runner(void *ctx) {
   pthread_setspecific(s_task_private_key, task);
   task->func(task->ctx);
   pthread_setspecific(s_task_private_key, NULL);
+  return NULL;
 }
 
 task_t *task_new_static(task_create_params_t *create_params) {
@@ -107,7 +108,10 @@ void task_destroy_static(task_t *task) {
     CUTILS_ASSERTF(!res, "Thread Join Failed");
   }
 }
-bool task_start(task_t *task) { return true; }
+bool task_start(task_t *task) {
+  (void)task;
+  return true;
+}
 
 cutils_ticks_t task_get_ticks(void) {
   struct timespec res = {0};

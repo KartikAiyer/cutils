@@ -147,6 +147,7 @@ static inline int thrd_create_ex(thrd_t *thr,
 #else
   /* SCHED_OTHER: priority range is 0..0, so .priority is a no-op. Inherit the
    * creating thread's scheduling to avoid the CAP_SYS_NICE requirement. */
+  (void)priority;
   rval = pthread_attr_setinheritsched(&attr, PTHREAD_INHERIT_SCHED);
   CHECK_RUN(!rval, pthread_attr_destroy(&attr); return rval, "Failed to set inherit scheduling");
 #endif
