@@ -31,6 +31,14 @@
       }
     },
     {
+      "name": "pthread-rt-debug",
+      "inherits": "pthread-debug",
+      "description": "Host pthread flavor with a real-time scheduling policy (SCHED_RR), Debug. Exposes the real 1..99 priority range so task_create_params_t::priority is honored via PTHREAD_EXPLICIT_SCHED — but on Linux this requires CAP_SYS_NICE (run as root, or grant the capability). Intended for the embedded-Linux (e.g. PREEMPT_RT) production target, not unprivileged host dev/CI; ctest under this preset will EPERM/segfault without privilege.",
+      "cacheVariables": {
+        "CUTILS_PTHREAD_SCHED_POLICY": "SCHED_RR"
+      }
+    },
+    {
       "name": "c11-debug",
       "inherits": "_base",
       "description": "Host C11-threads flavor, Debug. Calls into pthread underneath.",
@@ -72,6 +80,7 @@
   "buildPresets": [
     { "name": "pthread-debug",    "configurePreset": "pthread-debug" },
     { "name": "pthread-release",  "configurePreset": "pthread-release" },
+    { "name": "pthread-rt-debug", "configurePreset": "pthread-rt-debug" },
     { "name": "c11-debug",        "configurePreset": "c11-debug" },
     { "name": "c11-release",     "configurePreset": "c11-release" },
     { "name": "freertos-debug",   "configurePreset": "freertos-debug" },
@@ -81,6 +90,12 @@
     {
       "name": "pthread-debug",
       "configurePreset": "pthread-debug",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "pthread-rt-debug",
+      "configurePreset": "pthread-rt-debug",
+      "description": "Real-time (SCHED_RR) pthread tests. Requires CAP_SYS_NICE; will EPERM/segfault unprivileged.",
       "output": { "outputOnFailure": true }
     },
     {

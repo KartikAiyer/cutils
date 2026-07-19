@@ -27,7 +27,32 @@
 #include <cutils/os_types.h>
 #include <pthread.h>
 
-#define SCHEDULING_POLICY (SCHED_OTHER)
+/**
+ * @brief Scheduling policy for the pthread port.
+ *
+ * Configurable at CMake time via CUTILS_PTHREAD_SCHED_POLICY (default
+ * SCHED_OTHER). This single knob drives both the CUTILS_TASK_PRIORITY_*
+ * range below and whether task_new_static() takes explicit control of thread
+ * scheduling.
+ *
+ * Priority-abstraction contract (Linux):
+ * - SCHED_OTHER (default): sched_get_priority_{min,max} == 0, so every
+ *   CUTILS_TASK_PRIORITY_* collapses to 0 and task_create_params_t::priority
+ *   is a no-op. task_new_static() uses PTHREAD_INHERIT_SCHED, so the build
+ *   runs unprivileged — the host/CI path. The abstraction is a host
+ *   convenience here, not a real scheduler.
+ * - SCHED_FIFO / SCHED_RR: 1..99 priority range; priorities are real and
+ *   .priority is honored via PTHREAD_EXPLICIT_SCHED. Requires CAP_SYS_NICE
+ *   (root), intended for the embedded-Linux (e.g. PREEMPT_RT) production
+ *   target; pthread_create() returns EPERM without it.
+ * - The FreeRTOS port is where priorities are fully real with no privilege.
+ *
+ * See issue #22.
+ */
+#ifndef CUTILS_PTHREAD_SCHED_POLICY
+#define CUTILS_PTHREAD_SCHED_POLICY SCHED_OTHER
+#endif
+#define SCHEDULING_POLICY (CUTILS_PTHREAD_SCHED_POLICY)
 #ifdef __cplusplus
 extern "C" {
 #endif
