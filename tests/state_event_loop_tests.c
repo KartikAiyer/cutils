@@ -80,6 +80,7 @@ typedef struct {
 } posted_counts_t;
 
 static void test_notifier_callback(notifier_block_t *block, uint32_t category, void *notif_data) {
+  (void)block;
   posted_counts_t *count_array = (posted_counts_t *)notif_data;
 
   count_array[category].count++;
@@ -114,11 +115,19 @@ static void test_state_init(state_machine_t *sm, state_t *state) {
   p_loop->init_count++;
 }
 
-static void test_state_enter(state_machine_t *sm, state_t *state) {}
+static void test_state_enter(state_machine_t *sm, state_t *state) {
+  (void)sm;
+  (void)state;
+}
 
-static void test_state_exit(state_machine_t *sm, state_t *state) {}
+static void test_state_exit(state_machine_t *sm, state_t *state) {
+  (void)sm;
+  (void)state;
+}
 
 static bool test_state_valid_event(state_machine_t *sm, state_t *state, void *evt) {
+  (void)sm;
+  (void)state;
   test_event_t *event = (test_event_t *)evt;
 
   if (event->base.event_id < TEST_MAX_EVENT_ID)
@@ -128,6 +137,7 @@ static bool test_state_valid_event(state_machine_t *sm, state_t *state, void *ev
 }
 
 static uint32_t test_state_handle_event(state_machine_t *sm, state_t *state, void *evt) {
+  (void)sm;
   uint32_t next_state = state->stateId;
   test_state_t *test_state = (test_state_t *)state;
   test_event_t *event = (test_event_t *)evt;

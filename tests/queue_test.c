@@ -60,7 +60,6 @@ static void freeListCanCreateWithAppropriateSize(void) {
 
 static void freeListCanAllocateAsManyAsAvailable(void) {
   KListHead *p_head = 0;
-  KListElem *p_alloc = NULL;
   for (uint32_t i = 0; i < s_fl_list->item_count; i++) {
     free_list_test_unit_t *item = (free_list_test_unit_t *)free_list_get(s_fl_list);
     TEST_ASSERT(item);

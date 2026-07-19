@@ -130,6 +130,7 @@ static size_t validate_accumulator(testio_data_t *p_data) {
 }
 
 static size_t testio_read_f(asyncio_handle_t handle, uint8_t *p_rx_data_buf, uint32_t timeout) {
+  (void)p_rx_data_buf;
   size_t retval = 0;
   testio_data_t *p_data = (testio_data_t *)asyncio_get_private_data(handle);
   uint32_t act_flags = 0;
@@ -145,6 +146,7 @@ static size_t testio_write_f(asyncio_handle_t handle,
                              size_t tx_data_size,
                              uint8_t *p_tx_data_buf,
                              uint32_t timeout) {
+  (void)timeout;
   size_t retval = 0;
   testio_data_t *p_data = (testio_data_t *)asyncio_get_private_data(handle);
 
@@ -172,6 +174,7 @@ static size_t testio_tx_only_write_f(asyncio_handle_t handle,
                                      size_t tx_data_size,
                                      uint8_t *p_tx_data_buf,
                                      uint32_t timeout) {
+  (void)timeout;
   size_t retval = 0;
   // Just going to validate the data.
   testio_data_t *p_data = (testio_data_t *)asyncio_get_private_data(handle);
@@ -217,6 +220,8 @@ static bool send_random_payload(testio_data_t *p_data,
 }
 
 static void testio_rx_f(asyncio_handle_t h_asyncio, asyncio_message_t message, size_t size) {
+  (void)message;
+  (void)size;
 
   testio_data_t *p_data = (testio_data_t *)asyncio_get_private_data(h_asyncio);
 
@@ -280,6 +285,10 @@ static void asyncio_tx_only_notification_f(asyncio_tx_token_t token,
                                            asyncio_tx_send_status_e sendStatus,
                                            uint32_t sendSize,
                                            void *pPrivate) {
+  (void)token;
+  (void)sendStatus;
+  (void)sendSize;
+  (void)pPrivate;
   if (s_data.status == TestContinuing) {
     s_data.current_proc_packets++;
     event_flag_send(&s_data.evt, BUF_AVAIL_TO_READ);
