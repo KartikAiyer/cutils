@@ -1,9 +1,13 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.21)
 project(
   cutils
   VERSION 0.0.1
   LANGUAGES C
 )
+
+# Always emit compile_commands.json for clangd/IDE indexing. Effective on Makefile and Ninja
+# (single-config) generators; no-op on multi-config generators (Ninja Multi-Config, VS, Xcode).
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 function(print_list theList)
   foreach(item ${theList})

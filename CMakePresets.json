@@ -1,0 +1,92 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 21, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "_base",
+      "hidden": true,
+      "description": "Common settings for every cutils preset: out-of-source build under build/<preset-name>, compile_commands.json emitted for clangd, tests enabled. The generator is intentionally left unset so CMake uses its platform default (Unix Makefiles on Linux); both Make and Ninja emit compile_commands.json. Set a generator in CMakeUserPresets.json to override.",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "BUILD_TESTING": "ON"
+      }
+    },
+    {
+      "name": "pthread-debug",
+      "inherits": "_base",
+      "description": "Host pthread flavor, Debug. Runs under ctest on a hosted libc + pthreads system.",
+      "cacheVariables": {
+        "CUTILS_PLATFORM_TYPE": "pthread",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "pthread-release",
+      "inherits": "_base",
+      "description": "Host pthread flavor, Release.",
+      "cacheVariables": {
+        "CUTILS_PLATFORM_TYPE": "pthread",
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "c11-debug",
+      "inherits": "_base",
+      "description": "Host C11-threads flavor, Debug. Calls into pthread underneath.",
+      "cacheVariables": {
+        "CUTILS_PLATFORM_TYPE": "c11",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "c11-release",
+      "inherits": "_base",
+      "description": "Host C11-threads flavor, Release.",
+      "cacheVariables": {
+        "CUTILS_PLATFORM_TYPE": "c11",
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "freertos-debug",
+      "inherits": "_base",
+      "description": "FreeRTOS/M7 cross-build for the QEMU mps2-an500 (Cortex-M7) embtest_runner, Debug. Requires the arm-none-eabi-* bare-metal toolchain and qemu-system-arm on PATH (see cmake/arm-none-eabi.cmake). Fetches FreeRTOS-Kernel via FetchContent (CUTILS_FREERTOS_SOURCE=fetch).",
+      "toolchainFile": "${sourceDir}/cmake/arm-none-eabi.cmake",
+      "cacheVariables": {
+        "CUTILS_PLATFORM_TYPE": "freertos",
+        "CUTILS_FREERTOS_PORT": "GCC_ARM_CM7",
+        "CUTILS_FREERTOS_SOURCE": "fetch",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "freertos-release",
+      "inherits": "freertos-debug",
+      "description": "FreeRTOS/M7 QEMU target, Release.",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    { "name": "pthread-debug",    "configurePreset": "pthread-debug" },
+    { "name": "pthread-release",  "configurePreset": "pthread-release" },
+    { "name": "c11-debug",        "configurePreset": "c11-debug" },
+    { "name": "c11-release",     "configurePreset": "c11-release" },
+    { "name": "freertos-debug",   "configurePreset": "freertos-debug" },
+    { "name": "freertos-release", "configurePreset": "freertos-release" }
+  ],
+  "testPresets": [
+    {
+      "name": "pthread-debug",
+      "configurePreset": "pthread-debug",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "freertos-debug",
+      "configurePreset": "freertos-debug",
+      "output": { "outputOnFailure": true }
+    }
+  ]
+}
