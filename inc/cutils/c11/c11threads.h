@@ -78,11 +78,33 @@ enum { thrd_success, thrd_timedout, thrd_busy, thrd_error, thrd_nomem };
 
 /* ---- thread management ---- */
 
+/* Internal bridge from our int-returning thrd_start_t to the void*-returning
+ * start routine pthread_create expects. Casting between incompatible function
+ * pointer types is technically UB and trips -Wcast-function-type; thrd_join
+ * reinterprets the return value back to int anyway, so the cast is benign on
+ * every ABI we target. Isolate it here with the warning silenced locally so
+ * neither thrd_create nor thrd_create_ex exposes the cast at its call site.
+ * See issue #23. */
+static inline int c11threads_pthread_create(thrd_t *thr,
+                                            const pthread_attr_t *attr,
+                                            thrd_start_t func,
+                                            void *arg) {
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif
+  void *(*start)(void *) = (void *(*)(void *))func;
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
+  return pthread_create(thr, attr, start, arg);
+}
+
 static inline int thrd_create(thrd_t *thr, thrd_start_t func, void *arg) {
   pthread_attr_t attr = {0};
   pthread_attr_init(&attr);
 
-  int res = pthread_create(thr, &attr, (void *(*)(void *))func, arg);
+  int res = c11threads_pthread_create(thr, &attr, func, arg);
   if (res == 0) {
     return thrd_success;
   }
@@ -100,6 +122,11 @@ static inline int thrd_create_ex(thrd_t *thr,
   pthread_attr_t attr = {0};
   size_t min_stack_size = 0;
   pthread_attr_init(&attr);
+  /* label is stored by the task layer (see task_get_current_name in
+   * src/c11/task.c, which reads a thread-local task pointer); thread naming
+   * via pthread_setname_np was removed for portability since it is a glibc
+   * Linux-only (_GNU_SOURCE) extension. See issue #23. */
+  (void)label;
 
   int rval = pthread_attr_getstacksize(&attr, &min_stack_size);
   CHECK_RUN(!rval, pthread_attr_destroy(&attr); return rval, "Failed to query minimum stack size");
@@ -124,21 +151,18 @@ static inline int thrd_create_ex(thrd_t *thr,
   CHECK_RUN(!rval, pthread_attr_destroy(&attr); return rval, "Failed to set inherit scheduling");
 #endif
   if (stack && stack_size >= min_stack_size) {
-    rval = pthread_attr_setstackaddr(&attr, stack);
+    rval = pthread_attr_setstack(&attr, stack, stack_size);
     CHECK_RUN(!rval, pthread_attr_destroy(&attr);
-              return rval, "Failed to set stack address", stack);
-    rval = pthread_attr_setstacksize(&attr, stack_size);
-    CHECK_RUN(!rval, pthread_attr_destroy(&attr); return rval, "Failed to set stack size");
+              return rval, "Failed to set stack", stack);
   }
   CHECK_RUN(!rval, pthread_attr_destroy(&attr);
             return rval,
                    "Failed to set scheduling priority between (%d, %d)",
                    sched_get_priority_min(SCHEDULING_POLICY),
                    sched_get_priority_max(SCHEDULING_POLICY));
-  int res = pthread_create(thr, &attr, (void *(*)(void *))func, arg);
+  int res = c11threads_pthread_create(thr, &attr, func, arg);
   pthread_attr_destroy(&attr);
   if (res == 0) {
-    pthread_setname_np(*thr, label);
     return thrd_success;
   } else {
     return thrd_error;
