@@ -60,6 +60,7 @@ static bool asyncio_start_rx_thread(asyncio_interface_instance_t *p_asyncio);
 
 static uint32_t
 asyncio_logger_prefix(logger_t *logger, void *client_data, char *string, uint32_t string_size) {
+  (void)client_data;
   uint32_t retval = 0;
   asyncio_interface_instance_t *p_asyncio =
       (asyncio_interface_instance_t *)((size_t)logger -
@@ -437,6 +438,7 @@ static void tx_f(void *arg1, void *arg2) {
 }
 
 static void rx_f(void *arg1, void *arg2) {
+  (void)arg2;
   uint8_t *p_buf = 0;
   size_t bytes_read = 0;
   asyncio_interface_instance_t *p_asyncio = (asyncio_interface_instance_t *)arg1;

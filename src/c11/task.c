@@ -69,7 +69,10 @@ void task_destroy_static(task_t *task) {
     thrd_join(task->task, &res);
   }
 }
-bool task_start(task_t *task) { return true; }
+bool task_start(task_t *task) {
+  (void)task;
+  return true;
+}
 
 cutils_ticks_t task_get_ticks(void) {
   struct timespec res = {0};

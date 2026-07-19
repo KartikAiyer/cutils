@@ -158,6 +158,7 @@ bool state_event_loop_install_event_pre_proc(state_event_loop_t *event_loop,
 }
 
 void state_event_loop_exec_queue_f(void *arg1, void *arg2) {
+  (void)arg2;
   event_t *event = (event_t *)arg1;
   state_event_loop_t *event_loop = event->event_loop;
 
