@@ -95,6 +95,119 @@ static inline bool ts_queue_dequeue(ts_queue_t *queue, void **item, uint32_t wai
   return false;
 }
 
+/**
+ * @brief Attempts to enqueue an item on the queue from an ISR.
+ *
+ * ISR-safe counterpart to ts_queue_enqueue(), backed by @c xQueueSendFromISR(). There is no
+ * @c wait_ms parameter by design: the absence of a timeout @e is the guarantee that this call
+ * never blocks. If the queue is full the call returns @c false immediately, leaving the calling
+ * ISR to handle the error as it sees fit.
+ *
+ * The act of queueing can unblock a task that was waiting to receive from this queue. If that
+ * task is a higher priority than the one the ISR interrupted, the ISR should request a context
+ * switch before exiting so the higher priority task runs promptly rather than at the next tick.
+ * That condition is reported through @p higher_priority_task_woken.
+ *
+ * @param queue Queue to enqueue into. A NULL queue, or one that was never successfully
+ *              initialized, fails the call rather than faulting.
+ * @param item Item to enqueue. The queue stores the pointer value itself, not the pointed-to
+ *             data, so the referent must remain valid until the consumer is done with it.
+ * @param[out] higher_priority_task_woken Set to @c true only if a higher priority task was
+ *             actually woken, and left untouched otherwise — this function never reads it and
+ *             never clears it. A sequence of such calls across different queues can therefore
+ *             share one flag and yield once at the end: a later call that woke nobody will not
+ *             overwrite an earlier call's @c true. May be NULL, which means the caller accepts
+ *             a deferred context switch.
+ *
+ * @return @c true if the item was enqueued, @c false if the queue was full or @p queue was
+ *         invalid.
+ *
+ * @warning Only call this from an ISR whose priority is numerically greater than or equal to
+ *          @c configMAX_SYSCALL_INTERRUPT_PRIORITY. Calling it from a higher-urgency (lower
+ *          numbered) interrupt corrupts kernel state. Use ts_queue_enqueue() from task context.
+ *
+ * @note The caller owns the single yield, and must initialize the flag itself:
+ * @code
+ * void my_isr(void) {
+ *   bool woken = false;
+ *   ts_queue_enqueue_from_isr(q1, a, &woken);
+ *   ts_queue_enqueue_from_isr(q2, b, &woken);
+ *   if (woken) portYIELD_FROM_ISR(pdTRUE);
+ * }
+ * @endcode
+ *
+ * @see ts_queue_dequeue_from_isr()
+ */
+static inline bool
+ts_queue_enqueue_from_isr(ts_queue_t *queue, void *item, bool *higher_priority_task_woken) {
+  if (queue && queue->handle) {
+    BaseType_t woken = pdFALSE;
+    BaseType_t res = xQueueSendFromISR(queue->handle, &item, &woken);
+    if (higher_priority_task_woken && woken)
+      *higher_priority_task_woken = true;
+    return (res == pdPASS);
+  }
+  return false;
+}
+
+/**
+ * @brief Attempts to dequeue an item from the queue from an ISR.
+ *
+ * ISR-safe counterpart to ts_queue_dequeue(), backed by @c xQueueReceiveFromISR(). There is no
+ * @c wait_ms parameter by design: the absence of a timeout @e is the guarantee that this call
+ * never blocks. If the queue is empty the call returns @c false immediately, leaving the calling
+ * ISR to handle the error as it sees fit.
+ *
+ * The act of dequeueing frees a slot, which can unblock a task that was waiting to send into a
+ * full queue. If that task is a higher priority than the one the ISR interrupted, the ISR should
+ * request a context switch before exiting so the higher priority task runs promptly rather than
+ * at the next tick. That condition is reported through @p higher_priority_task_woken. Note this
+ * is the mirror of the enqueue case: here the task being woken is a blocked @e producer, so the
+ * flag can only ever be set when the queue was full on entry.
+ *
+ * @param queue Queue to dequeue from. A NULL queue, or one that was never successfully
+ *              initialized, fails the call rather than faulting.
+ * @param[out] item Receives the dequeued pointer. Only written when the call returns @c true.
+ *             Must not be NULL.
+ * @param[out] higher_priority_task_woken Set to @c true only if a higher priority task was
+ *             actually woken, and left untouched otherwise — this function never reads it and
+ *             never clears it. A sequence of such calls across different queues can therefore
+ *             share one flag and yield once at the end: a later call that woke nobody will not
+ *             overwrite an earlier call's @c true. May be NULL, which means the caller accepts
+ *             a deferred context switch.
+ *
+ * @return @c true if an item was dequeued, @c false if the queue was empty or @p queue was
+ *         invalid.
+ *
+ * @warning Only call this from an ISR whose priority is numerically greater than or equal to
+ *          @c configMAX_SYSCALL_INTERRUPT_PRIORITY. Calling it from a higher-urgency (lower
+ *          numbered) interrupt corrupts kernel state. Use ts_queue_dequeue() from task context.
+ *
+ * @note The caller owns the single yield, and must initialize the flag itself:
+ * @code
+ * void my_isr(void) {
+ *   void *item = NULL;
+ *   bool woken = false;
+ *   while (ts_queue_dequeue_from_isr(q, &item, &woken))
+ *     handle(item);
+ *   if (woken) portYIELD_FROM_ISR(pdTRUE);
+ * }
+ * @endcode
+ *
+ * @see ts_queue_enqueue_from_isr()
+ */
+static inline bool
+ts_queue_dequeue_from_isr(ts_queue_t *queue, void **item, bool *higher_priority_task_woken) {
+  if (queue && queue->handle) {
+    BaseType_t woken = pdFALSE;
+    BaseType_t res = xQueueReceiveFromISR(queue->handle, item, &woken);
+    if (higher_priority_task_woken && woken)
+      *higher_priority_task_woken = true;
+    return (res == pdPASS);
+  }
+  return false;
+}
+
 static inline size_t ts_queue_get_count(ts_queue_t *queue) {
   return (queue && queue->handle) ? uxQueueMessagesWaiting(queue->handle) : 0;
 }

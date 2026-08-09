@@ -10,8 +10,8 @@ extern void semihost_exit(int code) __attribute__((noreturn));
 
 /* Stringify the suite accessor selected at compile time
  * (-DCUTILS_EMBTEST_SUITE=<fn>) for the per-suite runner's label. */
-#define EMBTEST_STR_(s) #s
-#define EMBTEST_STR(s) EMBTEST_STR_(s)
+#define EMBTEST_STR_(s)   #s
+#define EMBTEST_STR(s)    EMBTEST_STR_(s)
 
 #define RUNNER_STACK_SIZE 2048
 
@@ -45,6 +45,7 @@ extern TestRef accumulator_get_tests(void);
 extern TestRef dispatch_queue_get_tests(void);
 extern TestRef asyncio_get_tests(void);
 extern TestRef state_event_loop_get_tests(void);
+extern TestRef queue_ts_queue_isr_get_tests(void);
 
 static void runner_task(void *arg) {
   (void)arg;
@@ -65,6 +66,7 @@ static void runner_task(void *arg) {
   run_suite("dispatch_queue", dispatch_queue_get_tests);
   run_suite("asyncio", asyncio_get_tests);
   run_suite("state_event_loop", state_event_loop_get_tests);
+  run_suite("ts_queue_isr", queue_ts_queue_isr_get_tests);
   TestRunner_end();
   semihost_exit(TestRunner_failureCount() ? 1 : 0);
 }
