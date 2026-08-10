@@ -16,12 +16,22 @@
 file(GLOB test_sources ${PROJECT_SOURCE_DIR}/tests/*.c)
 list(REMOVE_ITEM test_sources ${PROJECT_SOURCE_DIR}/tests/all_embunit_tests.c)
 
+# isr_trigger.c defines a *strong* Interrupt0_Handler that overrides the weak
+# alias to Default_Handler in startup.c. That override depends on this being an
+# OBJECT library: every object is linked into the runner directly. If this ever
+# becomes a static archive, the linker may decline to pull isr_trigger.o -- the
+# vector table's reference is already satisfied by startup.o's weak alias -- and
+# the ISR tests would silently spin in Default_Handler's while(1) until ctest
+# times out. Keep OBJECT, or force inclusion (--whole-archive /
+# $<TARGET_OBJECTS:...>).
 add_library(
   embtest_common
   OBJECT
   ${test_sources}
   startup.c
-  retarget.c)
+  retarget.c
+  isr_trigger.c
+  ts_queue_isr_test.c)
 target_include_directories(
   embtest_common
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/extern/embunit ${API_INCLUDES})
@@ -131,3 +141,4 @@ freertos_add_embunit_test(NAME accumulator           SUITE_FN accumulator_get_te
 freertos_add_embunit_test(NAME dispatch_queue        SUITE_FN dispatch_queue_get_tests)
 freertos_add_embunit_test(NAME asyncio               SUITE_FN asyncio_get_tests)
 freertos_add_embunit_test(NAME state_event_loop      SUITE_FN state_event_loop_get_tests)
+freertos_add_embunit_test(NAME ts_queue_isr          SUITE_FN queue_ts_queue_isr_get_tests)

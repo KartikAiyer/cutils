@@ -11,3 +11,5 @@ entities.json
 
 # CMake user-local preset overrides (CMakePresets.json is committed; this is not)
 CMakeUserPresets.json
+
+CLAUDE.local.md

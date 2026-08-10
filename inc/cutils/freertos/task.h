@@ -133,6 +133,16 @@ typedef struct _task_create_params_t {
   TASK_INIT_CREATE_PARAMS_FROM_STORE(params, &TASK_STATIC_STORE(name), lbl, pri, fn, context)
 /** @} */
 
+/** A FreeRTOS specific macro to yield from an ISR. ISR functions that could potentially unblock
+ * a higher priority task when compared to the task that the ISR is running, will require the ISR
+ * to yield
+ */
+#define task_yield_from_isr(higher_priority_task_woken)                                            \
+  do {                                                                                             \
+    const bool cutils_woken__ = (higher_priority_task_woken);                                      \
+    portYIELD_FROM_ISR(cutils_woken__ ? pdTRUE : pdFALSE);                                         \
+  } while (0)
+
 #ifdef __cplusplus
 }
 #endif

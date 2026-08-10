@@ -35,3 +35,7 @@ docs(#1): document state_event_loop event processing flow
 3. Commit with `<type>(#<issue>): <desc>`.
 4. Verify build + tests before pushing.
 5. Open a PR referencing the issue.
+
+## Local Context file.
+
+If you find a CLAUDE.local.md file in the folder, please load it to add additional context.
