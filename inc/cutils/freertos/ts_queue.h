@@ -132,7 +132,7 @@ static inline bool ts_queue_dequeue(ts_queue_t *queue, void **item, uint32_t wai
  *   bool woken = false;
  *   ts_queue_enqueue_from_isr(q1, a, &woken);
  *   ts_queue_enqueue_from_isr(q2, b, &woken);
- *   if (woken) portYIELD_FROM_ISR(pdTRUE);
+ *   task_yield_from_isr(woken);  // no-ops when nothing was woken
  * }
  * @endcode
  *
@@ -190,7 +190,7 @@ ts_queue_enqueue_from_isr(ts_queue_t *queue, void *item, bool *higher_priority_t
  *   bool woken = false;
  *   while (ts_queue_dequeue_from_isr(q, &item, &woken))
  *     handle(item);
- *   if (woken) portYIELD_FROM_ISR(pdTRUE);
+ *   task_yield_from_isr(woken);  // no-ops when nothing was woken
  * }
  * @endcode
  *
