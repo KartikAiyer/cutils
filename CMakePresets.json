@@ -59,7 +59,7 @@
     {
       "name": "freertos-debug",
       "inherits": "_base",
-      "description": "FreeRTOS/M7 cross-build for the QEMU mps2-an500 (Cortex-M7) embtest_runner, Debug. Requires the arm-none-eabi-* bare-metal toolchain and qemu-system-arm on PATH (see cmake/arm-none-eabi.cmake). Fetches FreeRTOS-Kernel via FetchContent (CUTILS_FREERTOS_SOURCE=fetch).",
+      "description": "FreeRTOS/M7 cross-build for the QEMU mps2-an500 (Cortex-M7) per-suite embtest_<suite> runners, Debug. Requires the arm-none-eabi-* bare-metal toolchain and qemu-system-arm on PATH (see cmake/arm-none-eabi.cmake). Fetches FreeRTOS-Kernel via FetchContent (CUTILS_FREERTOS_SOURCE=fetch).",
       "toolchainFile": "${sourceDir}/cmake/arm-none-eabi.cmake",
       "cacheVariables": {
         "CUTILS_PLATFORM_TYPE": "freertos",
