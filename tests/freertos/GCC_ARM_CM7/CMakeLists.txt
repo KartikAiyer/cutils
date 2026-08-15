@@ -40,6 +40,7 @@ target_include_directories(
 # main() so the bare-metal main() in main.c is the sole entry point.
 target_compile_definitions(embtest_common PUBLIC AGGREGATE_RUNNER)
 target_link_libraries(embtest_common PUBLIC cutils platform_abstraction freertos_kernel embunit)
+target_link_libraries(embtest_common PRIVATE cutils_warning)
 
 # --- QEMU probe (once) -------------------------------------------------------
 find_program(QEMU_SYSTEM_ARM qemu-system-arm)
@@ -64,7 +65,7 @@ function(freertos_add_embunit_test)
   set(target embtest_${FAET_NAME})
   add_executable(${target} main.c)
   target_compile_definitions(${target} PRIVATE CUTILS_EMBTEST_SUITE=${FAET_SUITE_FN})
-  target_link_libraries(${target} PRIVATE embtest_common)
+  target_link_libraries(${target} PRIVATE embtest_common cutils_warning)
   target_link_options(${target} PRIVATE ${embtest_link_flags})
   target_compile_features(${target} PRIVATE c_std_11)
   set_target_properties(${target} PROPERTIES FOLDER tests/freertos)

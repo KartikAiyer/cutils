@@ -13,6 +13,14 @@
       }
     },
     {
+      "name": "_ci",
+      "hidden": true,
+      "description": "Verification overlay: turns CUTILS_WERROR on so -Wall/-Wextra become build failures (and -Wl,--fatal-warnings escalates linker diagnostics) on cutils' own targets only. Third-party code (embunit, FreeRTOS kernel) is unaffected. Mixed into each ci-* preset below; never inherited on its own. Local development deliberately stays warnings-only -- see issue #38.",
+      "cacheVariables": {
+        "CUTILS_WERROR": "ON"
+      }
+    },
+    {
       "name": "pthread-debug",
       "inherits": "_base",
       "description": "Host pthread flavor, Debug. Runs under ctest on a hosted libc + pthreads system.",
@@ -75,6 +83,41 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "ci-pthread-debug",
+      "inherits": ["_ci", "pthread-debug"],
+      "description": "Strict host pthread build, Debug. Same as pthread-debug with warnings as errors."
+    },
+    {
+      "name": "ci-pthread-release",
+      "inherits": ["_ci", "pthread-release"],
+      "description": "Strict host pthread build, Release. Optimization enables GCC's data-flow-dependent analyses (-Warray-bounds, -Wmaybe-uninitialized, -Wstrict-aliasing), which do not fire at -O0 -- so this preset catches a class of warnings the Debug presets structurally cannot."
+    },
+    {
+      "name": "ci-pthread-rt-debug",
+      "inherits": ["_ci", "pthread-rt-debug"],
+      "description": "Strict host pthread build with SCHED_RR, Debug. Build-only: compiles the CUTILS_PTHREAD_SCHED_POLICY=SCHED_RR branches that the SCHED_OTHER presets never touch. There is deliberately no matching test preset -- running these tests needs CAP_SYS_NICE and will EPERM unprivileged."
+    },
+    {
+      "name": "ci-c11-debug",
+      "inherits": ["_ci", "c11-debug"],
+      "description": "Strict host C11-threads build, Debug."
+    },
+    {
+      "name": "ci-c11-release",
+      "inherits": ["_ci", "c11-release"],
+      "description": "Strict host C11-threads build, Release. See ci-pthread-release for why the Release variants matter."
+    },
+    {
+      "name": "ci-freertos-debug",
+      "inherits": ["_ci", "freertos-debug"],
+      "description": "Strict FreeRTOS/M7 cross-build, Debug. Requires arm-none-eabi-* and qemu-system-arm on PATH."
+    },
+    {
+      "name": "ci-freertos-release",
+      "inherits": ["_ci", "freertos-release"],
+      "description": "Strict FreeRTOS/M7 cross-build, Release."
     }
   ],
   "buildPresets": [
@@ -84,7 +127,15 @@
     { "name": "c11-debug",        "configurePreset": "c11-debug" },
     { "name": "c11-release",     "configurePreset": "c11-release" },
     { "name": "freertos-debug",   "configurePreset": "freertos-debug" },
-    { "name": "freertos-release", "configurePreset": "freertos-release" }
+    { "name": "freertos-release", "configurePreset": "freertos-release" },
+
+    { "name": "ci-pthread-debug",    "configurePreset": "ci-pthread-debug" },
+    { "name": "ci-pthread-release",  "configurePreset": "ci-pthread-release" },
+    { "name": "ci-pthread-rt-debug", "configurePreset": "ci-pthread-rt-debug" },
+    { "name": "ci-c11-debug",        "configurePreset": "ci-c11-debug" },
+    { "name": "ci-c11-release",      "configurePreset": "ci-c11-release" },
+    { "name": "ci-freertos-debug",   "configurePreset": "ci-freertos-debug" },
+    { "name": "ci-freertos-release", "configurePreset": "ci-freertos-release" }
   ],
   "testPresets": [
     {
@@ -101,6 +152,36 @@
     {
       "name": "freertos-debug",
       "configurePreset": "freertos-debug",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "ci-pthread-debug",
+      "configurePreset": "ci-pthread-debug",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "ci-pthread-release",
+      "configurePreset": "ci-pthread-release",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "ci-c11-debug",
+      "configurePreset": "ci-c11-debug",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "ci-c11-release",
+      "configurePreset": "ci-c11-release",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "ci-freertos-debug",
+      "configurePreset": "ci-freertos-debug",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "ci-freertos-release",
+      "configurePreset": "ci-freertos-release",
       "output": { "outputOnFailure": true }
     }
   ]
