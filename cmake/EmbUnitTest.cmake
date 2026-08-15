@@ -23,7 +23,8 @@ macro(package_add_embunit_test)
     PRIVATE "${PROJECT_SOURCE_DIR}/extern/embunit"
     PRIVATE "${API_INCLUDE_DIR}")
 
-  target_link_libraries(${PAE_NAME} cutils embunit ${LIBS})
+  target_link_libraries(${PAE_NAME} PRIVATE cutils embunit ${LIBS})
+  target_link_libraries(${PAE_NAME} PRIVATE cutils_warning)
 
   add_test(NAME ${PAE_NAME} COMMAND ${PAE_NAME})
 

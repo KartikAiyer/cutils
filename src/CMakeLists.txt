@@ -24,6 +24,7 @@ endif()
 add_library(logger_basic logger.c)
 target_compile_definitions(logger_basic PUBLIC c_std_11)
 target_include_directories(logger_basic PUBLIC ${API_INCLUDES})
+target_link_libraries(logger_basic PRIVATE cutils_warning)
 
 if("${CUTILS_PLATFORM_TYPE}" STREQUAL "c11")
   add_subdirectory(c11)
@@ -49,7 +50,8 @@ set(SOURCES
 add_library(cutils ${SOURCES} ${HEADER_LIST})
 target_include_directories(cutils PUBLIC ${API_INCLUDES})
 target_compile_features(cutils PUBLIC c_std_11)
-target_link_libraries(cutils logger_basic platform_abstraction)
+target_link_libraries(cutils PUBLIC logger_basic platform_abstraction)
+target_link_libraries(cutils PRIVATE cutils_warning)
 
 source_group(
   TREE "${PROJECT_SOURCE_DIR}/inc"

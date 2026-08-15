@@ -17,6 +17,8 @@ endfunction()
 
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+option(CUTILS_WERROR "Treat warnings as errors on cutils' own targets" OFF)
+
 # Configure the platform specific stuff Currently only C11 APIs supported
 set(CUTILS_SUPPORTED_PLATFORM_TYPES pthread c11 freertos)
 
@@ -158,6 +160,13 @@ else()
 endif()
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/Version.h.in" "${CMAKE_CURRENT_BINARY_DIR}/inc/cutils/Version.h")
+
+add_library(cutils_warning INTERFACE)
+target_compile_options(cutils_warning INTERFACE -Wall -Wextra)
+if(CUTILS_WERROR)
+  target_compile_options(cutils_warning INTERFACE -Werror)
+  target_link_options(cutils_warning INTERFACE -Wl,--fatal-warnings)
+endif()
 
 set(API_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/inc" "${CMAKE_CURRENT_BINARY_DIR}/inc/")
 add_subdirectory(src)

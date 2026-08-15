@@ -33,6 +33,7 @@
 #include <sched.h> /* for sched_yield */
 #include <sys/time.h>
 #include <time.h>
+#include <stdint.h>
 
 #define ONCE_FLAG_INIT PTHREAD_ONCE_INIT
 
@@ -170,7 +171,7 @@ static inline int thrd_create_ex(thrd_t *thr,
   }
 }
 
-static inline void thrd_exit(int res) { pthread_exit((void *)&res); }
+static inline void thrd_exit(int res) { pthread_exit((void *)(intptr_t)res); }
 
 static inline int thrd_join(thrd_t thr, int *res) {
   void *retval;
@@ -179,7 +180,7 @@ static inline int thrd_join(thrd_t thr, int *res) {
     return thrd_error;
   }
   if (res) {
-    *res = *((int *)&retval);
+    *res = (int)(intptr_t)retval;
   }
   return thrd_success;
 }

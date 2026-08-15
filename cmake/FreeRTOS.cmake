@@ -54,8 +54,19 @@ endif()
 
 if(NOT TARGET freertos_config)
   add_library(freertos_config INTERFACE)
-  target_include_directories(freertos_config SYSTEM INTERFACE ${FREERTOS_CONFIG_INCLUDE_DIR})
+  target_include_directories(freertos_config INTERFACE ${FREERTOS_CONFIG_INCLUDE_DIR})
 endif()
 
 # --- Populate + add_subdirectory upstream FreeRTOS-Kernel -> freertos_kernel ---
 FetchContent_MakeAvailable(freertos_kernel)
+
+# Consume the upstream kernel headers as -isystem so that they don't error on 
+# -Wall -Werror that is used by cutils and other targets
+foreach(_frt_tgt freertos_kernel_include freertos_kernel_port_headers)
+  if(TARGET ${_frt_tgt})
+    get_target_property(_frt_dirs ${_frt_tgt} INTERFACE_INCLUDE_DIRECTORIES)
+    if(_frt_dirs)
+      set_target_properties(${_frt_tgt} PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${_frt_dirs}")
+    endif()
+  endif()
+endforeach()

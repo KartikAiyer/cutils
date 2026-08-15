@@ -46,7 +46,7 @@ DISPATCH_QUEUE_STORE_DECL(asyncio_tx_q, 4, 64 * 1024);
 DISPATCH_QUEUE_STORE_DEF(asyncio_tx_q);
 
 #define BUF_AVAIL_TO_READ (1 << 0)
-#define TEST_COMPLETE (1 << 1)
+#define TEST_COMPLETE     (1 << 1)
 
 #define TEST_STATUS_E(XX)                                                                          \
   XX(TestPassed, = 0)                                                                              \
@@ -122,9 +122,9 @@ static size_t validate_accumulator(testio_data_t *p_data) {
     p_data->status = TestFailedUnexpectedBufferSize;
     snprintf(p_data->err_str,
              sizeof(p_data->err_str),
-             "Recd: %" PRIu64 " bytes, expected %" PRIu32 " bytes",
-             retval,
-             MESSAGE_BUF_SIZE);
+             "Recd: %" PRIu32 " bytes, expected %" PRIu32 " bytes",
+             (uint32_t)retval,
+             (uint32_t)MESSAGE_BUF_SIZE);
   }
   return retval;
 }
@@ -162,9 +162,9 @@ static size_t testio_write_f(asyncio_handle_t handle,
     p_data->status = TestFailedUnexpectedBufferSize;
     snprintf(p_data->err_str,
              sizeof(p_data->err_str),
-             "Trying to send %" PRIu64 " bytes when %" PRIu32 " is max",
-             tx_data_size,
-             MESSAGE_BUF_SIZE);
+             "Trying to send %" PRIu32 " bytes when %" PRIu32 " is max",
+             (uint32_t)tx_data_size,
+             (uint32_t)MESSAGE_BUF_SIZE);
   }
 
   return retval;
@@ -190,9 +190,9 @@ static size_t testio_tx_only_write_f(asyncio_handle_t handle,
     p_data->status = TestFailedUnexpectedBufferSize;
     snprintf(p_data->err_str,
              sizeof(p_data->err_str),
-             "Trying to send %" PRIu64 " bytes when %" PRIu32 " is max",
-             tx_data_size,
-             MESSAGE_BUF_SIZE);
+             "Trying to send %" PRIu32 " bytes when %" PRIu32 " is max",
+             (uint32_t)tx_data_size,
+             (uint32_t)MESSAGE_BUF_SIZE);
   }
   return retval;
 }

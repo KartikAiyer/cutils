@@ -115,7 +115,11 @@ __attribute__((noreturn)) void _exit(int status) { semihost_exit(status); }
 
 pid_t _getpid(void) { return (pid_t)1; }
 
-int _kill(pid_t pid, int sig) { return -1; }
+int _kill(pid_t pid, int sig) {
+  (void)pid;
+  (void)sig;
+  return -1;
+}
 
 int _gettimeofday(struct timeval *tv, void *tz) {
   (void)tz;
@@ -127,9 +131,9 @@ int _gettimeofday(struct timeval *tv, void *tz) {
   return -1;
 }
 
-uint64_t __atomic_fetch_add_8(void *mem, uint64_t val, int model) {
+uint64_t __atomic_fetch_add_8(volatile void *mem, uint64_t val, int model) {
   (void)model;
-  uint64_t *p = (uint64_t *)mem;
+  volatile uint64_t *p = (uint64_t *)mem;
   uint32_t primask;
   __asm volatile("mrs %0, primask" : "=r"(primask));
   __asm volatile("cpsid i" : : : "memory");
@@ -138,9 +142,9 @@ uint64_t __atomic_fetch_add_8(void *mem, uint64_t val, int model) {
   __asm volatile("msr primask, %0" : : "r"(primask) : "memory");
   return old;
 }
-uint64_t __atomic_load_8(const void *mem, int model) {
+uint64_t __atomic_load_8(const volatile void *mem, int model) {
   (void)model;
-  const uint64_t *p = (const uint64_t *)mem;
+  const volatile uint64_t *p = (const uint64_t *)mem;
   uint64_t value;
   uint32_t primask;
   __asm volatile("mrs %0, primask" : "=r"(primask));
@@ -150,9 +154,9 @@ uint64_t __atomic_load_8(const void *mem, int model) {
   return value;
 }
 
-void __atomic_store_8(void *mem, uint64_t val, int model) {
+void __atomic_store_8(volatile void *mem, uint64_t val, int model) {
   (void)model;
-  uint64_t *p = (uint64_t *)mem;
+  volatile uint64_t *p = (uint64_t *)mem;
   uint32_t primask;
   __asm volatile("mrs %0, primask" : "=r"(primask));
   __asm volatile("cpsid i" : : : "memory");

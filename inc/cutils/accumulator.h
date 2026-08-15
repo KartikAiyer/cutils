@@ -43,7 +43,7 @@ typedef struct {
 
 typedef void *accumulator_h;
 
-#define ACCUMULATOR_STORE(name) accumulator_store_##name
+#define ACCUMULATOR_STORE(name)   accumulator_store_##name
 #define ACCUMULATOR_STORE_T(name) accumulator_store_##name##_t
 #define ACCUMULATOR_STORE_DECL(name, size_in_bytes)                                                \
   typedef struct {                                                                                 \
@@ -225,6 +225,9 @@ static inline uint32_t accumulator_peek_at(accumulator_h accumulator,
                                            uint8_t *buf,
                                            uint32_t size) {
   accumulator_t *p_acc = (accumulator_t *)accumulator;
+  if (iter >= p_acc->total_buffer_size) {
+    return 0;
+  }
   uint32_t bytes_contained = accumulator_bytes_contained_from(accumulator, iter);
   if (size > bytes_contained) {
     size = bytes_contained;
